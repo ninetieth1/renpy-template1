@@ -1,0 +1,54 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  ANDROID_NDK_HOME: ""
+
+jobs:
+  android_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: project
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Create signing key
+        run: |
+          keytool -genkeypair -keystore project/android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Ninetieth, O=Ninetieth, C=RU"
+
+      - name: Install Ren'Py + Android
+        uses: Ayowel/renpy-setup-action@v2.0.1
+        with:
+          action: install
+          install_dir: renpy
+          dlc: rapt
+          android_sdk: true
+          android_properties: |
+            key.alias=android
+            key.store.password=android
+            key.alias.password=android
+            key.store=android.keystore
+
+      - name: Build APK
+        uses: Ayowel/renpy-setup-action@v2.0.1
+        with:
+          action: android_build
+          install_dir: renpy
+          build_type: apk
+          game: project
+          out_dir: target
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ninetieth-apk
+          path: target/*.apk
