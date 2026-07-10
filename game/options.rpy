@@ -38,7 +38,7 @@ define gui.about = _p("""
 ## distribution. This must be ASCII-only, and must not contain spaces, colons,
 ## or semicolons.
 
-define build.name = "renpy-template"
+define build.name = "Ninetieth"
 
 
 ## Sounds and music ############################################################
