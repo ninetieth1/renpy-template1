@@ -1,0 +1,20 @@
+{
+    "include_pil": false,
+    "include_relaunch": true,
+    "layout": "internal",
+    "source": false,
+    "expansion": false,
+    "google_play_key": null,
+    "google_play_salt": null,
+    "package": "ru.ninetieth.game",
+    "name": "Девяностые",
+    "icon_name": "Девяностые",
+    "version": "1.0",
+    "numeric_version": 1,
+    "orientation": "sensorPortrait",
+    "permissions": ["VIBRATE"],
+    "store": "none",
+    "heap_size": "3",
+    "update_icons": true,
+    "update_always": true
+}
