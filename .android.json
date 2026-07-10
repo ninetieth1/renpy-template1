@@ -15,6 +15,7 @@
     "permissions": ["VIBRATE"],
     "store": "none",
     "heap_size": "3",
+    "update_keystores": false,
     "update_icons": true,
     "update_always": true
 }
