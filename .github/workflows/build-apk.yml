@@ -23,7 +23,7 @@ jobs:
 
       - name: Create signing key
         run: |
-          keytool -genkeypair -keystore project/android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Ninetieth, O=Ninetieth, C=RU"
+          keytool -genkeypair -keystore /home/runner/android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Ninetieth, O=Ninetieth, C=RU"
 
       - name: Install Ren'Py + Android
         uses: Ayowel/renpy-setup-action@v2.0.1
