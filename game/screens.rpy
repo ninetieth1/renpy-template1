@@ -300,38 +300,31 @@ screen navigation():
 
         if main_menu:
 
-            textbutton _("Start") action Start()
+            textbutton _("Начать новую игру") action Start()
+            textbutton _("Продолжить") action ShowMenu("load")
+            textbutton _("Настройки") action ShowMenu("preferences")
+            textbutton _("О игре") action ShowMenu("about")
+            textbutton _("Выход") action Quit(confirm=True)
 
         else:
 
-            textbutton _("History") action ShowMenu("history")
+            textbutton _("История") action ShowMenu("history")
+            textbutton _("Сохранить") action ShowMenu("save")
+            textbutton _("Загрузить") action ShowMenu("load")
+            textbutton _("Настройки") action ShowMenu("preferences")
 
-            textbutton _("Save") action ShowMenu("save")
+            if _in_replay:
+                textbutton _("Закончить повтор") action EndReplay(confirm=True)
+            else:
+                textbutton _("Главное меню") action MainMenu()
 
-        textbutton _("Load") action ShowMenu("load")
+            textbutton _("О игре") action ShowMenu("about")
 
-        textbutton _("Preferences") action ShowMenu("preferences")
+            if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
+                textbutton _("Помощь") action ShowMenu("help")
 
-        if _in_replay:
-
-            textbutton _("End Replay") action EndReplay(confirm=True)
-
-        elif not main_menu:
-
-            textbutton _("Main Menu") action MainMenu()
-
-        textbutton _("About") action ShowMenu("about")
-
-        if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
-
-            ## Help isn't necessary or relevant to mobile devices.
-            textbutton _("Help") action ShowMenu("help")
-
-        if renpy.variant("pc"):
-
-            ## The quit button is banned on iOS and unnecessary on Android and
-            ## Web.
-            textbutton _("Quit") action Quit(confirm=not main_menu)
+            if renpy.variant("pc"):
+                textbutton _("Выход") action Quit(confirm=not main_menu)
 
 
 style navigation_button is gui_button
