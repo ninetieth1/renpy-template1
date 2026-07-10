@@ -36,7 +36,7 @@ jobs:
             key.alias=android
             key.store.password=android
             key.alias.password=android
-            key.store=android.keystore
+            key.store=/home/runner/android.keystore
 
       - name: Build APK
         uses: Ayowel/renpy-setup-action@v2.0.1
