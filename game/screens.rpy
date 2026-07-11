@@ -937,7 +937,7 @@ screen history():
                 text what:
                     substitute False
 
-         if not _history_list:
+        if not _history_list:
             label _("The dialogue history is empty.")
 
 
@@ -990,5 +990,3 @@ style history_label_text:
 ## A screen that gives information about key and mouse bindings. It uses other
 ## screens (keyboard_help, mouse_help, and gamepad_help) to display the actual
 ## help.
-
-[...]
