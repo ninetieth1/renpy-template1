@@ -386,16 +386,16 @@ screen main_menu():
         yalign 0.68
         spacing 8
 
-        textbutton _("Start") action Start()
-        textbutton _("Load") action ShowMenu("load")
-        textbutton _("Preferences") action ShowMenu("preferences")
-        textbutton _("About") action ShowMenu("about")
+        textbutton _("Начать новую игру") action Start()
+        textbutton _("Продолжить") action ShowMenu("load")
+        textbutton _("Настройки") action ShowMenu("preferences")
+        textbutton _("О игре") action ShowMenu("about")
 
         if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
-            textbutton _("Help") action ShowMenu("help")
+            textbutton _("Помощь") action ShowMenu("help")
 
         if renpy.variant("pc"):
-            textbutton _("Quit") action Quit(confirm=False)
+            textbutton _("Выход") action Quit(confirm=False)
 
     ## MR LIMBO
     text "MR LIMBO":
@@ -403,7 +403,7 @@ screen main_menu():
         yalign 1.0
         xoffset -30
         yoffset -20
-        size 20
+        size 30
         color "#5c7a9966"
         font "kazmann-sans.ttf"
 
