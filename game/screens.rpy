@@ -485,7 +485,6 @@ screen game_menu(title, scroll=None, yinitial=0.0, spacing=0):
 
                     transclude
 
-    use navigation
 
     textbutton _("Return"):
         style "return_button"
