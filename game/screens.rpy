@@ -417,7 +417,7 @@ style main_nav_button:
 
 style main_nav_button_text:
     xalign 0.5
-    size 36
+    size 43
     font "kazmann-sans.ttf"
     idle_color "#7a8fa8"
     hover_color "#47a6ff"
