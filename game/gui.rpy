@@ -1,109 +1,169 @@
-﻿################################################################################
-## Initialization
+################################################################################
+## UI v2 — объёмные кнопки и увеличенный интерфейс
 ################################################################################
 
-## The init offset statement causes the initialization statements in this file
-## to run before init statements in any other file.
-init offset = -2
+init offset = 1
 
-## Calling gui.init resets the styles to sensible default values, and sets the
-## width and height of the game.
-init python:
-    gui.init(1920, 1080)
+## Слои кнопки: нижняя тень создаёт эффект физической глубины.
+image ui_button_idle = Composite(
+    (520, 82),
+    (0, 9), Solid("#02070d", xysize=(520, 73)),
+    (0, 0), Solid("#0b1725", xysize=(520, 73)),
+    (0, 0), Solid("#18344a", xysize=(520, 2))
+)
 
-## Enable checks for invalid or unstable properties in screens or transforms
-define config.check_conflicting_properties = True
+image ui_button_hover = Composite(
+    (520, 82),
+    (0, 9), Solid("#03101a", xysize=(520, 73)),
+    (0, 0), Solid("#102b40", xysize=(520, 73)),
+    (0, 0), Solid("#47a6ff", xysize=(520, 3))
+)
 
+image ui_button_selected = Composite(
+    (520, 82),
+    (0, 7), Solid("#02101a", xysize=(520, 75)),
+    (0, 2), Solid("#12344c", xysize=(520, 73)),
+    (0, 2), Solid("#00b3ff", xysize=(520, 3))
+)
 
-################################################################################
-## GUI Configuration Variables
-################################################################################
+## Чистый фон внутренних меню, без старых полос.
+style game_menu_outer_frame:
+    bottom_padding 45
+    top_padding 180
+    background Solid("#050a14")
 
+style frame:
+    padding gui.frame_borders.padding
+    background Solid("#0a1628")
 
-## Colors ######################################################################
-##
-## The colors of text in the interface.
+## Главное меню.
+style main_nav_button:
+    xalign 0.5
+    xsize 520
+    ysize 82
+    background Frame("ui_button_idle", Borders(18, 18, 18, 22))
+    hover_background Frame("ui_button_hover", Borders(18, 18, 18, 22))
+    selected_background Frame("ui_button_selected", Borders(18, 18, 18, 22))
+    activate_sound "ui/click_003.ogg"
 
-## An accent color used throughout the interface to label and highlight text.
-define gui.accent_color = '#00b3ff'
+style main_nav_button_text:
+    xalign 0.5
+    yalign 0.43
+    size 52
+    font "kazmann-sans.ttf"
+    idle_color "#9bb4cc"
+    hover_color "#ffffff"
+    selected_color "#00b3ff"
+    insensitive_color "#44576a"
+    idle_outlines [(1, "#02060c", 0, 2)]
+    hover_outlines [(2, "#006fa3", 0, 2)]
 
-## The color used for a text button when it is neither selected nor hovered.
-define gui.idle_color = '#7a8fa8'
+## Кнопка «Назад» и навигационные кнопки.
+style navigation_button:
+    size_group "navigation"
+    xsize 420
+    ysize 76
+    background Frame("ui_button_idle", Borders(18, 18, 18, 22))
+    hover_background Frame("ui_button_hover", Borders(18, 18, 18, 22))
+    selected_background Frame("ui_button_selected", Borders(18, 18, 18, 22))
 
-## The small color is used for small text, which needs to be brighter/darker to
-## achieve the same effect.
-define gui.idle_small_color = '#5c7a99'
+style navigation_button_text:
+    xalign 0.5
+    yalign 0.43
+    size 46
+    idle_color "#9bb4cc"
+    hover_color "#ffffff"
+    selected_color "#00b3ff"
+    idle_outlines [(1, "#02060c", 0, 2)]
 
-## The color that is used for buttons and bars that are hovered.
-define gui.hover_color = '#47a6ff'
+style return_button:
+    xpos 60
+    yalign 1.0
+    yoffset -35
+    xsize 300
+    ysize 70
 
-## The color used for a text button when it is selected but not focused. A
-## button is selected if it is the current screen or preference value.
-define gui.selected_color = '#ffffff'
+style return_button_text:
+    xalign 0.5
+    size 44
 
-## The color used for a text button when it cannot be selected.
-define gui.insensitive_color = '#3a4d637f'
+## Настройки: крупные объёмные переключатели.
+style radio_button:
+    xsize 500
+    ysize 72
+    left_padding 62
+    background Frame("ui_button_idle", Borders(18, 18, 18, 22))
+    hover_background Frame("ui_button_hover", Borders(18, 18, 18, 22))
+    selected_background Frame("ui_button_selected", Borders(18, 18, 18, 22))
+    foreground "gui/button/radio_[prefix_]foreground.png"
 
-## Colors used for the portions of bars that are not filled in. These are not
-## used directly, but are used when re-generating bar image files.
-define gui.muted_color = '#0a1a2e'
-define gui.hover_muted_color = '#0f2d4a'
+style radio_button_text:
+    size 44
+    idle_color "#9bb4cc"
+    hover_color "#ffffff"
+    selected_color "#00b3ff"
 
-## The colors used for dialogue and menu choice text.
-define gui.text_color = '#ffffff'
-define gui.interface_text_color = '#ffffff'
+style check_button:
+    xsize 500
+    ysize 72
+    left_padding 62
+    background Frame("ui_button_idle", Borders(18, 18, 18, 22))
+    hover_background Frame("ui_button_hover", Borders(18, 18, 18, 22))
+    selected_background Frame("ui_button_selected", Borders(18, 18, 18, 22))
+    foreground "gui/button/check_[prefix_]foreground.png"
 
+style check_button_text:
+    size 44
+    idle_color "#9bb4cc"
+    hover_color "#ffffff"
+    selected_color "#00b3ff"
 
-## Fonts and Font Sizes ########################################################
+## Подписи и ползунки настроек крупнее.
+style pref_label_text:
+    size 46
+    yalign 1.0
 
-## The font used for in-game text.
-define gui.text_font = "kazmann-sans.ttf"
+style slider_label_text:
+    size 43
 
-## The font used for character names.
-define gui.name_text_font = "kazmann-sans.ttf"
+style slider_slider:
+    xsize 620
+    ysize 48
 
-## The font used for out-of-game text.
-define gui.interface_text_font = "kazmann-sans.ttf"
+## Сохранения и подтверждения.
+style page_button_text:
+    size 36
 
-## The size of normal dialogue text.
-define gui.text_size = 33
+style slot_button_text:
+    size 32
 
-## The size of character names.
-define gui.name_text_size = 45
+style confirm_button:
+    xsize 300
+    ysize 76
+    background Frame("ui_button_idle", Borders(18, 18, 18, 22))
+    hover_background Frame("ui_button_hover", Borders(18, 18, 18, 22))
 
-## The size of text in the game's user interface.
-define gui.interface_text_size = 33
+style confirm_button_text:
+    xalign 0.5
+    size 44
 
-## The size of labels in the game's user interface.
-define gui.label_text_size = 36
+style confirm_frame:
+    padding gui.confirm_frame_borders.padding
+    background Solid("#0a1a2e")
+    xalign 0.5
+    yalign 0.5
 
-## The size of text on the notify screen.
-define gui.notify_text_size = 24
+## Быстрое меню, крупные сенсорные кнопки.
+style quick_button:
+    xminimum 82
+    yminimum 64
 
-## The size of the game's title.
-define gui.title_text_size = 75
-
-
-## Main and Game Menus #########################################################
-
-## The images used for the main and game menus.
-define gui.main_menu_background = "main_menu_bg"
-define gui.game_menu_background = "gui/game_menu.png"
-
-
-## Dialogue ####################################################################
-##
-## These variables control how dialogue is displayed on the screen one line at a
-## time.
-
-## The height of the textbox containing dialogue.
-define gui.textbox_height = 278
-
-## The placement of the textbox vertically on the screen. 0.0 is the top, 0.5 is
-## center, and 1.0 is the bottom.
-define gui.textbox_yalign = 1.0
-
-
+style quick_button_text:
+    size 40
+    idle_color "#7f9ab3"
+    hover_color "#ffffff"
+    selected_color "#00b3ff"
+    outlines [(1, "#02060c", 0, 2)]
 ## The placement of the speaking character's name, relative to the textbox.
 ## These can be a whole number of pixels from the left or top, or 0.5 to center.
 define gui.name_xpos = 360
