@@ -411,14 +411,14 @@ screen main_menu():
 
 style main_nav_button:
     xalign 0.5
-    xminimum 300
+    xminimum 434
     top_padding 8
     bottom_padding 8
     hover_background Frame(Solid("#00b3ff12"), Borders(6,6,6,6))
 
 style main_nav_button_text:
     xalign 0.5
-    size 36
+    size 52
     font "kazmann-sans.ttf"
     idle_color "#7a8fa8"
     hover_color "#47a6ff"
