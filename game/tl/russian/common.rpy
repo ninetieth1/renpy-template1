@@ -1,6 +1,6 @@
 translate russian strings:
 
-    ## screens.rpy — Navigation
+    ## Navigation
     old "Start"
     new "Начать"
 
@@ -34,7 +34,7 @@ translate russian strings:
     old "Return"
     new "Назад"
 
-    ## screens.rpy — Quick Menu
+    ## Quick Menu
     old "Back"
     new "Назад"
 
@@ -53,7 +53,7 @@ translate russian strings:
     old "Prefs"
     new "Настр."
 
-    ## screens.rpy — Preferences
+    ## Preferences
     old "Display"
     new "Экран"
 
@@ -93,7 +93,7 @@ translate russian strings:
     old "Mute All"
     new "Выключить всё"
 
-    ## screens.rpy — File Slots
+    ## File Slots
     old "Page {}"
     new "Страница {}"
 
@@ -112,7 +112,7 @@ translate russian strings:
     old "Download Sync"
     new "Скачать синхронизацию"
 
-    ## screens.rpy — Confirm
+    ## Confirm
     old "Are you sure?"
     new "Вы уверены?"
 
@@ -125,18 +125,14 @@ translate russian strings:
     old "Are you sure you want to delete this save?"
     new "Удалить это сохранение?"
 
-    old "Loading will lose unsaved progress.
-Are you sure you want to do this?"
-    new "Загрузка приведёт к потере несохранённого прогресса.
-Продолжить?"
+    old "Loading will lose unsaved progress.\nAre you sure you want to do this?"
+    new "Загрузка приведёт к потере несохранённого прогресса.\nПродолжить?"
 
     old "Are you sure you want to quit?"
     new "Выйти из игры?"
 
-    old "Are you sure you want to return to the main menu?
-This will lose unsaved progress."
-    new "Вернуться в главное меню?
-Несохранённый прогресс будет потерян."
+    old "Are you sure you want to return to the main menu?\nThis will lose unsaved progress."
+    new "Вернуться в главное меню?\nНесохранённый прогресс будет потерян."
 
     old "Yes"
     new "Да"
@@ -144,7 +140,7 @@ This will lose unsaved progress."
     old "No"
     new "Нет"
 
-    ## screens.rpy — Help/Keyboard
+    ## Help / Keyboard
     old "Keyboard"
     new "Клавиатура"
 
@@ -187,14 +183,8 @@ This will lose unsaved progress."
     old "Left-click or tap to advance dialogue. Right-click or two-finger tap to access the game menu."
     new "Нажмите для продолжения. Два пальца — игровое меню."
 
-    old "Version [config.version!t]
-"
-    new "Версия [config.version!t]
-"
+    old "Version [config.version!t]\n"
+    new "Версия [config.version!t]\n"
 
-    old "Made with {a=https://www.renpy.org/}Ren'Py{/a} [renpy.version_only].
-
-[renpy.license!t]"
-    new "Создано на {a=https://www.renpy.org/}Ren'Py{/a} [renpy.version_only].
-
-[renpy.license!t]"
+    old "Made with {a=https://www.renpy.org/}Ren'Py{/a} [renpy.version_only].\n\n[renpy.license!t]"
+    new "Создано на {a=https://www.renpy.org/}Ren'Py{/a} [renpy.version_only].\n\n[renpy.license!t]"
