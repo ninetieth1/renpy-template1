@@ -218,4 +218,4 @@ init 10 python:
 ################################################################################
 
 init 999 python:
-    gui.main_menu_background = "main_menu_bg"
+    gui.main_menu_background = "#ff0000"
