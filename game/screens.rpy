@@ -375,58 +375,55 @@ style navigation_button_text:
 
 screen main_menu():
 
-    ## This ensures that any other menu screen is replaced.
     tag menu
 
     add gui.main_menu_background
 
-    ## This empty frame darkens the main menu.
-    frame:
-        style "main_menu_frame"
+    ## Кнопки — центральный столбец под шаром
+    vbox:
+        style_prefix "main_nav"
+        xalign 0.5
+        yalign 0.68
+        spacing 8
 
-    ## The use statement includes another screen inside this one. The actual
-    ## contents of the main menu are in the navigation screen.
-    use navigation
+        textbutton _("Start") action Start()
+        textbutton _("Load") action ShowMenu("load")
+        textbutton _("Preferences") action ShowMenu("preferences")
+        textbutton _("About") action ShowMenu("about")
 
-    if gui.show_name:
+        if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
+            textbutton _("Help") action ShowMenu("help")
 
-        vbox:
-            style "main_menu_vbox"
+        if renpy.variant("pc"):
+            textbutton _("Quit") action Quit(confirm=False)
 
-            text "[config.name!t]":
-                style "main_menu_title"
+    ## MR LIMBO
+    text "MR LIMBO":
+        xalign 1.0
+        yalign 1.0
+        xoffset -30
+        yoffset -20
+        size 20
+        color "#5c7a9966"
+        font "kazmann-sans.ttf"
 
-            text "[config.version]":
-                style "main_menu_version"
 
+style main_nav_button:
+    xalign 0.5
+    xminimum 300
+    top_padding 8
+    bottom_padding 8
+    hover_background Frame(Solid("#00b3ff12"), Borders(6,6,6,6))
 
-style main_menu_frame is empty
-style main_menu_vbox is vbox
-style main_menu_text is gui_text
-style main_menu_title is main_menu_text
-style main_menu_version is main_menu_text
-
-style main_menu_frame:
-    xsize 420
-    yfill True
-
-    background "gui/overlay/main_menu.png"
-
-style main_menu_vbox:
-    xalign 1.0
-    xoffset -30
-    xmaximum 1200
-    yalign 1.0
-    yoffset -30
-
-style main_menu_text:
-    properties gui.text_properties("main_menu", accent=True)
-
-style main_menu_title:
-    properties gui.text_properties("title")
-
-style main_menu_version:
-    properties gui.text_properties("version")
+style main_nav_button_text:
+    xalign 0.5
+    size 36
+    font "kazmann-sans.ttf"
+    idle_color "#7a8fa8"
+    hover_color "#47a6ff"
+    selected_color "#00b3ff"
+    insensitive_color "#3a4d637f"
+    hover_outlines [(0, "#47a6ff30", 2, 2)]
 
 
 ## Game Menu screen ############################################################
