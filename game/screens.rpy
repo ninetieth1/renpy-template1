@@ -399,10 +399,11 @@ screen main_menu():
     text "MR LIMBO":
         xalign 1.0
         yalign 1.0
-        xoffset -30
-        yoffset -20
-        size 20
-        color "#5c7a9966"
+        xoffset -36
+        yoffset -28
+        size 34
+        color "#9bb4cc"
+        outlines [(2, "#02060c", 0, 2)]
         font "kazmann-sans.ttf"
 
 
