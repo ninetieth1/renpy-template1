@@ -521,12 +521,12 @@ style game_menu_navigation_frame:
     yfill True
 
 style game_menu_content_frame:
-    left_margin 60
-    right_margin 30
+    left_margin 120
+    right_margin 90
     top_margin 15
 
 style game_menu_viewport:
-    xsize 1380
+    xsize 1650
 
 style game_menu_vscrollbar:
     unscrollable gui.unscrollable
