@@ -122,8 +122,7 @@ screen say(who, what):
             text_hover_color "#ffffff"
 
     if not renpy.variant("small"):
-        add SideImage() xalign 0.0 yalign 1.0
-
+        add SideImage() xalign 0.0 yalign
 
 
 ## Make the namebox available for styling through the Character object.
@@ -385,38 +384,40 @@ screen main_menu():
         style_prefix "main_nav"
         xalign 0.5
         yalign 0.68
-        spacing 12
+        spacing 8
 
-        textbutton "Начать новую игру" action Start()
-        textbutton "Продолжить" action ShowMenu("load")
-        textbutton "Загрузить" action ShowMenu("load")
-        textbutton "Настройки" action ShowMenu("preferences")
-        textbutton "Об игре" action ShowMenu("about")
+        textbutton _("Start") action Start()
+        textbutton _("Load") action ShowMenu("load")
+        textbutton _("Preferences") action ShowMenu("preferences")
+        textbutton _("About") action ShowMenu("about")
+
+        if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
+            textbutton _("Help") action ShowMenu("help")
 
         if renpy.variant("pc"):
-            textbutton "Выход" action Quit(confirm=True)
+            textbutton _("Quit") action Quit(confirm=False)
+
     ## MR LIMBO
     text "MR LIMBO":
         xalign 1.0
         yalign 1.0
-        xoffset -36
-        yoffset -28
-        size 34
-        color "#9bb4cc"
-        outlines [(2, "#02060c", 0, 2)]
+        xoffset -30
+        yoffset -20
+        size 20
+        color "#5c7a9966"
         font "kazmann-sans.ttf"
 
 
 style main_nav_button:
     xalign 0.5
-    xminimum 434
+    xminimum 300
     top_padding 8
     bottom_padding 8
     hover_background Frame(Solid("#00b3ff12"), Borders(6,6,6,6))
 
 style main_nav_button_text:
     xalign 0.5
-    size 52
+    size 36
     font "kazmann-sans.ttf"
     idle_color "#7a8fa8"
     hover_color "#47a6ff"
@@ -446,7 +447,14 @@ screen game_menu(title, scroll=None, yinitial=0.0, spacing=0):
     frame:
         style "game_menu_outer_frame"
 
-        frame: style "game_menu_content_frame" 
+        hbox:
+
+            ## Reserve space for the navigation section.
+            frame:
+                style "game_menu_navigation_frame"
+
+            frame:
+                style "game_menu_content_frame"
 
                 if scroll == "viewport":
 
@@ -485,6 +493,7 @@ screen game_menu(title, scroll=None, yinitial=0.0, spacing=0):
 
                     transclude
 
+    use navigation
 
     textbutton _("Return"):
         style "return_button"
@@ -521,12 +530,12 @@ style game_menu_navigation_frame:
     yfill True
 
 style game_menu_content_frame:
-    left_margin 120
-    right_margin 90
+    left_margin 60
+    right_margin 30
     top_margin 15
 
 style game_menu_viewport:
-    xsize 1650
+    xsize 1380
 
 style game_menu_vscrollbar:
     unscrollable gui.unscrollable
@@ -761,11 +770,12 @@ screen preferences():
                         textbutton _("Fullscreen") action Preference("display", "fullscreen")
 
                 vbox:
-                style_prefix "check"
-                label _("Skip")
-                textbutton _("Unseen Text") action Preference("skip", "toggle")
-                textbutton _("After Choices") action Preference("after choices", "toggle")
-                textbutton _("Transitions") action InvertSelected(Preference("transitions", "toggle"))
+                    style_prefix "check"
+                    label _("Skip")
+                    textbutton _("Unseen Text") action Preference("skip", "toggle")
+                    textbutton _("After Choices") action Preference("after choices", "toggle")
+                    textbutton _("Transitions") action InvertSelected(Preference("transitions", "toggle"))
+
                 ## Additional vboxes of type "radio_pref" or "check_pref" can be
                 ## added here, to add additional creator-defined preferences.
 
