@@ -209,7 +209,7 @@ init 10 python:
     else:
         renpy.image(
             "main_menu_bg",
-            Solid("#060d16", xysize=(1920, 1080)),
+            Solid("#ff0000", xysize=(1920, 1080)),
         )
 
 
