@@ -11,7 +11,7 @@
     "icon_name": "Девяностые",
     "version": "1.0",
     "numeric_version": 1,
-    "orientation": "sensorPortrait",
+    "orientation": "landscape",
     "permissions": ["VIBRATE"],
     "store": "none",
     "heap_size": "3",
