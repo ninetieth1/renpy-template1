@@ -1,1 +1,1 @@
-## Устанавливаем русский язык по умолчанию init python: config.language = "russian" 
+define config.language = "russian"
