@@ -385,19 +385,16 @@ screen main_menu():
         style_prefix "main_nav"
         xalign 0.5
         yalign 0.68
-        spacing 8
+        spacing 12
 
-        textbutton _("Start") action Start()
-        textbutton _("Load") action ShowMenu("load")
-        textbutton _("Preferences") action ShowMenu("preferences")
-        textbutton _("About") action ShowMenu("about")
-
-        if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
-            textbutton _("Help") action ShowMenu("help")
+        textbutton "Начать новую игру" action Start()
+        textbutton "Продолжить" action ShowMenu("load")
+        textbutton "Загрузить" action ShowMenu("load")
+        textbutton "Настройки" action ShowMenu("preferences")
+        textbutton "Об игре" action ShowMenu("about")
 
         if renpy.variant("pc"):
-            textbutton _("Quit") action Quit(confirm=False)
-
+            textbutton "Выход" action Quit(confirm=True)
     ## MR LIMBO
     text "MR LIMBO":
         xalign 1.0
