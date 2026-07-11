@@ -122,7 +122,8 @@ screen say(who, what):
             text_hover_color "#ffffff"
 
     if not renpy.variant("small"):
-        add SideImage() xalign 0.0 yalign
+        add SideImage() xalign 0.0 yalign 1.0
+
 
 
 ## Make the namebox available for styling through the Character object.
