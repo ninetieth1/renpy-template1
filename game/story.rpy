@@ -67,6 +67,28 @@ label card_click(msg, tsize=30):
     return
 
 
+# ===== Проигрывание видео БЕЗ пропуска =====
+# Во время ролика кнопки скрыты и клик не перелистывает — переход дальше только после конца видео.
+# Длительность каждого ролика в СЕКУНДАХ — ПОСТАВЬ РЕАЛЬНЫЕ ЗНАЧЕНИЯ:
+define VIDEO_LEN = {
+    "scene_4_1": 8.0,
+    "scene_5_1": 7.0,
+    "scene_23_1": 4.0,
+    "scene_24_1": 8.0,
+    "scene_29_1": 6.0,
+}
+
+label play_video(vid):
+    $ quick_menu = False
+    window hide
+    $ renpy.scene()
+    $ renpy.show("videoplayer", what=Transform(Movie(play="video/" + vid + ".webm"), xysize=(1920, 1080), fit="cover", align=(0.5, 0.5)))
+    $ renpy.pause(VIDEO_LEN.get(vid, 5.0), hard=True)
+    $ renpy.hide("videoplayer")
+    $ quick_menu = True
+    return
+
+
 # ===== Газета (Сцена 16): текст на экране, продолжить — удержать 8 сек =====
 screen hold_to_continue(msg, hold_time=8.0):
     modal True
@@ -76,16 +98,16 @@ screen hold_to_continue(msg, hold_time=8.0):
     add Solid("#000000")
     text msg:
         xalign 0.5
-        yalign 0.42
-        xsize 1700
-        size 22
+        yalign 0.46
+        xsize 1820
+        size 30
         color "#eeeeee"
-        line_spacing 4
+        line_spacing 6
     text "Удерживайте экран, чтобы продолжить  ([int(hold_time - progress)])":
         xalign 0.5
-        yalign 0.96
-        size 24
-        color "#888888"
+        yalign 0.97
+        size 30
+        color "#bbbbbb"
 
     key "mousedown_1" action SetScreenVariable("holding", True)
     key "mouseup_1" action [SetScreenVariable("holding", False), SetScreenVariable("progress", 0.0)]
@@ -141,7 +163,7 @@ label story_start:
     andrey "Всему своё время. Тем более, такое чувство, что ты не сильно-то и стараешься."
     vika "Ладно, я пойду к себе в комнату."
     andrey "Ладно, только..."
-    $ renpy.movie_cutscene("video/scene_4_1.webm")
+    call play_video("scene_4_1")
     call card_timed("Чуть позже — вечером", 4.0)
 
     # ===== Сцена 5 =====
@@ -154,7 +176,7 @@ label story_start:
     vika "Да, мам, я уже ложусь..."
     mama "Добрых снов вам."
     andrey "Спокойной ночи, мам."
-    $ renpy.movie_cutscene("video/scene_5_1.webm")
+    call play_video("scene_5_1")
     call card_timed("Новый день", 4.0)
 
     # ===== Сцена 6 ===== (фон появляется после первой реплики)
@@ -319,7 +341,7 @@ label story_start:
     "Сани мягко покачивались, полозья пели свою тихую песню, и впервые за долгие часы я перевёл дух. Дед всё что-то бормотал про погоду, про неурожай, про то, как тяжело нынче люду. Я слушал вполуха, кутаясь в куртку. Тепло разлилось по телу, глаза сами закрывались."
     ded "Ты спи, спи, малец. Разбужу, как приедем."
     "{i}Какой хороший человек. Не думал, что мне так повезёт.{/i}"
-    $ renpy.movie_cutscene("video/scene_23_1.webm")
+    call play_video("scene_23_1")
     call card_timed("Прошло 2-3 часа", 4.0)
 
     # ===== Сцена 24 ===== (фон появляется после первой реплики)
@@ -331,7 +353,7 @@ label story_start:
     ded "Мало ли что я сказал. Не серчай. Иди вон по той дороге, к вечеру, глядишь, и доберёшься. Но-о, пошла!"
     "Сани скрылись за поворотом так же внезапно, как появились. Я стоял посреди чужой дороги, и до меня медленно доходило: я не приблизился к цели. Я стал дальше. Тепло, что грело меня в санях, вытекло в один миг, и мороз снова вцепился в плечи."
     "{i}Как же так. Я ведь ему поверил.{/i}"
-    $ renpy.movie_cutscene("video/scene_24_1.webm")
+    call play_video("scene_24_1")
 
     # ===== Сцена 25 =====
     scene scene_25 with dissolve
@@ -370,7 +392,7 @@ label story_start:
     scene scene_29 with dissolve
     "{i}Ноги не идут. Голова кружится. Только чуть-чуть присяду... на минутку.{/i}"
     "Мир качнулся и опрокинулся. Последнее, что я помню, — как заваливаюсь куда-то в сторону от дороги, в глубокий снег. А потом темнота."
-    $ renpy.movie_cutscene("video/scene_29_1.webm")
+    call play_video("scene_29_1")
 
     # ===== Сцена 30 ===== (фон scene_30 после начального описания)
     "Я очнулся от боли. Небо на востоке чуть посветлело — значит, утро, часов пять или шесть. Я лежал в сугробе, засыпанный снегом почти целиком. Тело не слушалось. Замёрзло всё, что можно и нельзя."
