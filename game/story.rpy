@@ -523,7 +523,7 @@ label branch_a:
     "Рука так и осталась лежать в снегу, сжимая нетронутую склянку. До дома было недалеко."
     call card_click(ending_a_text, 40)
     scene black with fade
-    centered "{size=90}{k=4}{b}КОНЕЦ А{/b}{/k}{/size}"
+    centered "{size=90}{k=4}КОНЕЦ{/k}{/size}"
     return
 
 
@@ -550,5 +550,5 @@ label branch_b:
     "Снег падал на пустую склянку, выпавшую из руки. Одна доза — та, что ждала Вику. Теперь её не было ни у него, ни у неё."
     call card_click(ending_b_text, 40)
     scene black with fade
-    centered "{size=90}{k=4}{b}КОНЕЦ Б{/b}{/k}{/size}"
+    centered "{size=90}{k=4}КОНЕЦ{/k}{/size}"
     return
