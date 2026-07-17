@@ -443,7 +443,7 @@ init python:
         gui.textbox_height = 360
         gui.name_xpos = 120
         gui.dialogue_xpos = 135
-        gui.dialogue_width = 1650
+        gui.dialogue_width = 900
 
         ## Change the size and spacing of various things.
         gui.slider_size = 54
