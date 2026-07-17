@@ -47,7 +47,7 @@ screen card_screen(msg, tsize=64):
         text_align 0.5
         size tsize
         color "#ffffff"
-        xsize 1500
+        xsize 1750
         line_spacing 6
 
 # Карточка на N секунд, затем автопереход
@@ -473,7 +473,7 @@ label story_start:
 label story_part2:
 
     scene black with fade
-    centered "Глава 2"
+    centered "{size=90}Глава 2"
 
     # ===== Сцена 1 =====
     scene scene_2_1 with dissolve
@@ -494,7 +494,6 @@ label story_part2:
     # ===== Сцена 5 — ВЫБОР =====
     scene scene_2_5 with dissolve
     "{i}Одна доза. Либо донесу её Вике — и, может, не дойду сам. Либо выпью сейчас. Но тогда сестра...{/i}"
-    scene scene_2_6 with dissolve
     menu:
         "Нет. Это Викино. Донесу.":
             jump branch_a
@@ -522,9 +521,9 @@ label branch_a:
     "Снег был мягкий. Мороз почему-то уже не кусался, а как будто укрывал, согревал. Веки тяжелели."
     "{i}Ещё немного. Совсем немного.{/i}"
     "Рука так и осталась лежать в снегу, сжимая нетронутую склянку. До дома было недалеко."
-    call card_click(ending_a_text, 30)
+    call card_click(ending_a_text, 40)
     scene black with fade
-    centered "{b}КОНЕЦ А{/b}"
+    centered "{size=90}{k=4}{b}КОНЕЦ А{/b}{/k}{/size}"
     return
 
 
@@ -549,7 +548,7 @@ label branch_b:
     # ===== Сцена 9 (Б) — концовка =====
     scene scene_2_b_a with dissolve
     "Снег падал на пустую склянку, выпавшую из руки. Одна доза — та, что ждала Вику. Теперь её не было ни у него, ни у неё."
-    call card_click(ending_b_text, 30)
+    call card_click(ending_b_text, 40)
     scene black with fade
-    centered "{b}КОНЕЦ Б{/b}"
+    centered "{size=90}{k=4}{b}КОНЕЦ Б{/b}{/k}{/size}"
     return
