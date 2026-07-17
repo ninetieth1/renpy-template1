@@ -378,6 +378,14 @@ screen main_menu():
     tag menu
 
     add gui.main_menu_background
+text "Девяностые":
+        xalign 0.5
+        yalign 0.46
+        size 110
+        font "kazmann-sans.ttf"
+        color "#ffffff"
+        kerning 4.0
+        outlines [(3, "#00b3ff88", 0, 0)]
 
     ## Кнопки — центральный столбец под шаром
     vbox:
@@ -394,8 +402,7 @@ screen main_menu():
         if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
             textbutton _("Помощь") action ShowMenu("help")
 
-        if renpy.variant("pc"):
-            textbutton _("Выход") action Quit(confirm=False)
+        textbutton _("Выход") action Quit(confirm=True)
 
     ## MR LIMBO
     text "MR LIMBO":
