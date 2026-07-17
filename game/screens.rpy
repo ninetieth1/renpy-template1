@@ -378,7 +378,8 @@ screen main_menu():
     tag menu
 
     add gui.main_menu_background
-text "Девяностые":
+
+    text "Девяностые":
         xalign 0.5
         yalign 0.46
         size 110
@@ -997,3 +998,4 @@ style history_label_text:
 ## A screen that gives information about key and mouse bindings. It uses other
 ## screens (keyboard_help, mouse_help, and gamepad_help) to display the actual
 ## help.
+##
