@@ -397,6 +397,7 @@ screen main_menu():
         spacing 8
 
         textbutton _("Начать новую игру") action Start()
+        textbutton _("DLC+") action Start("dlc_plus")
         textbutton _("Продолжить") action ShowMenu("load")
         textbutton _("Настройки") action ShowMenu("preferences")
         textbutton _("О игре") action ShowMenu("about")
@@ -998,5 +999,3 @@ style history_label_text:
 ##
 ## A screen that gives information about key and mouse bindings. It uses other
 ## screens (keyboard_help, mouse_help, and gamepad_help) to display the actual
-## help.
-
