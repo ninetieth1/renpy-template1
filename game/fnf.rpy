@@ -1,4 +1,14 @@
-# game/fnf.rpy - FNF (tracks + per-track bg + VFX + DLC+)
+# ==========================================================
+# game/fnf.rpy — FNF мини-игра (DLC+)
+# ФИКСЫ:
+#  [1] Фон геймплея ВСЕГДА images/fnf/bg.png (все 8 треков)
+#  [2] Колонки нормального размера, GF реально сидит на них
+#  [3] Музыка играет ДО КОНЦА песни, победа после конца музыки
+#  [4] Экран выбора трека в стиле оригинала (жёлтая полоса, WEEK 1)
+#  [5] Провал больше не пишет "Трек пройден", счёт недели сохраняется
+#  ВАЖНО: удалить game/fnf_fix.rpy — он больше не нужен!
+# ==========================================================
+
 init python:
     import random, math, json
     try:
@@ -15,14 +25,14 @@ init python:
     }
 
     FNF_TITLES = [
-        u"\u041f\u0440\u0438\u0432\u0435\u0442",
-        u"\u041e\u0431\u0449\u0435\u043d\u0438\u0435",
-        u"\u0424\u0435\u043d\u043e\u043c\u0435\u043d\u0430\u043b\u044c\u043d\u043e",
-        u"\u041f\u043e\u0433\u043e\u0432\u043e\u0440\u0438\u043c?",
-        u"\u0412\u0441\u0451 \u043d\u0435\u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0435 \u2014 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e",
-        u"\u0414\u043e\u0433\u043e\u0432\u043e\u0440\u0438\u043c\u0441\u044f?",
-        u"\u0427\u0442\u043e?",
-        u"\u041c\u042b \u0421\u041d\u041e\u0412\u0410 \u0412\u041c\u0415\u0421\u0422\u0415?",
+        u"Привет",
+        u"Общение",
+        u"Феноменально",
+        u"Поговорим?",
+        u"Всё невозможное — возможно",
+        u"Договоримся?",
+        u"Что?",
+        u"МЫ СНОВА ВМЕСТЕ?",
     ]
 
     def fnf_track_title(i):
@@ -36,16 +46,27 @@ init python:
         except Exception:
             return 7
 
-    def fnf_on_clear(track):
+    def fnf_on_clear(track, score=0):
         try:
             cl = list(persistent.fnf_cleared or [])
             if int(track) not in cl:
                 cl.append(int(track))
-            persistent.fnf_cleared = cl
+                persistent.fnf_cleared = cl
             if all(i in cl for i in range(7)):
                 persistent.fnf_unlocked8 = True
+            # лучший счёт за трек
+            sc = dict(persistent.fnf_scores or {})
+            if int(score) > int(sc.get(int(track), 0)):
+                sc[int(track)] = int(score)
+                persistent.fnf_scores = sc
         except Exception:
             pass
+
+    def fnf_week_score():
+        try:
+            return sum((persistent.fnf_scores or {}).values())
+        except Exception:
+            return 0
 
     def fnf_sfx(name):
         try:
@@ -54,6 +75,16 @@ init python:
                 renpy.sound.play(p, channel="sound")
         except Exception:
             pass
+
+    # Трансформ "подогнать картинку под нужную высоту в пикселях"
+    def fnf_fit(path, th):
+        try:
+            w, h = renpy.image_size(path)
+            if h:
+                return Transform(path, zoom=float(th) / float(h))
+        except Exception:
+            pass
+        return Transform(path)
 
     def fnf_demo_chart(difficulty="normal", bpm=150.0):
         cfg = {"easy": (10, 3, 3), "normal": (14, 3, 4), "hard": (16, 4, 5)}
@@ -112,6 +143,7 @@ init python:
             self.approach = {"easy": 1500.0, "normal": 1150.0, "hard": 880.0}.get(difficulty, 1150.0)
             self.started = None
             self.music_started = False
+            self.music_ok = False
             self.health, self.score, self.combo, self.maxcombo = 1.0, 0, 0, 0
             self.counts = {"sick": 0, "good": 0, "bad": 0, "miss": 0}
             self.result = None
@@ -124,13 +156,11 @@ init python:
             self._w, self._h = 1280, 720
             self.note = {l: "images/fnf/note_%s.png" % NAMES[l] for l in range(4)}
             self.rec = {l: "images/fnf/rec_%s.png" % NAMES[l] for l in range(4)}
-            bgp = "images/fnf/bg%d.png" % (self.track + 1)
-            if not renpy.loadable(bgp):
-                bgp = "images/fnf/bg.png"
-            self.bgp = bgp
+            # ФИКС [1]: фон всегда bg.png, без per-track фонов
+            self.bgp = "images/fnf/bg.png"
             self.chars = {
                 "op": ("images/fnf/char_opponent.png", 0.20, 0.64),
-                "gf": ("images/fnf/char_gf.png", 0.50, 0.46),
+                "gf": ("images/fnf/char_gf.png", 0.50, 0.38),
                 "bf": ("images/fnf/char_player.png", 0.80, 0.64),
             }
             self.sing = {"op": [0, 0.0], "bf": [0, 0.0]}
@@ -230,6 +260,9 @@ init python:
             r.blit(cr, (int(cx - cw / 2), int(cy - ch / 2)))
 
         def _blit_speakers(self, r, st, at):
+            # ФИКС [2]: колонки масштабируются по ВЫСОТЕ (26% экрана),
+            # а не по ширине — раньше на телефоне они были гигантскими,
+            # и GF улетала за верх экрана.
             self._gf_foot = int(self._h * 0.90)
             path = "images/fnf/speakers.png"
             if not renpy.loadable(path):
@@ -245,13 +278,14 @@ init python:
             nw, nh = sz
             if not nw or not nh:
                 return
-            z = (self._w * 0.40) / float(nw)
+            z = (self._h * 0.26) / float(nh)
             cr = renpy.render(self._tf_get(path, z), self._w, self._h, st, at)
             cw, ch = cr.get_size()
-            bottom = int(self._h * 0.985)
+            bottom = int(self._h * 0.95)
             top = bottom - ch
             r.blit(cr, (int(self._w * 0.5 - cw / 2), top))
-            self._gf_foot = top + int(self._h * 0.05)
+            # GF садится на верх колонок (небольшой нахлёст)
+            self._gf_foot = top + int(self._h * 0.04)
 
         def _text(self, r, s, x, y, size, col, st, at):
             key = (s, size, col)
@@ -313,6 +347,7 @@ init python:
             sp = self.songpos(st)
             r = renpy.Render(width, height)
 
+            # ФИКС [1]: всегда bg.png
             if renpy.loadable(self.bgp):
                 r.blit(renpy.render(im.Scale(self.bgp, width, height), width, height, st, at), (0, 0))
             else:
@@ -342,8 +377,9 @@ init python:
                 self.music_started = True
                 try:
                     renpy.music.play(self.song, channel="music", loop=False)
+                    self.music_ok = True
                 except Exception:
-                    pass
+                    self.music_ok = False
 
             for lane in range(4):
                 self._blit_img(r, (self.note[lane] if self.olights[lane] > 0 else self.rec[lane]), ox[lane], recy_o, zo, st, at)
@@ -405,7 +441,7 @@ init python:
 
             tot = sum(self.counts.values())
             acc = int(round((self.counts["sick"] + self.counts["good"] * 0.66 + self.counts["bad"] * 0.33) / tot * 100)) if tot else 100
-            self._text(r, u"Score  %d      \u0422\u043e\u0447\u043d\u043e\u0441\u0442\u044c  %d%%" % (self.score, acc), width / 2, by + bh + 6, 26, "#ffffff", st, at)
+            self._text(r, u"Score %d  Точность %d%%" % (self.score, acc), width / 2, by + bh + 6, 26, "#ffffff", st, at)
             if self.combo > 1:
                 self._text(r, u"%d x" % self.combo, width / 2, int(height * 0.40), 46, "#ffffff", st, at)
             for p in self.popups:
@@ -431,10 +467,10 @@ init python:
                 over = renpy.Render(width, height)
                 over.canvas().rect((10, 6, 16, 220), (0, 0, width, height))
                 r.blit(over, (0, 0))
-                title = u"\u041f\u041e\u0411\u0415\u0414\u0410!" if self.result == "clear" else u"\u041f\u0420\u041e\u0412\u0410\u041b"
+                title = u"ПОБЕДА!" if self.result == "clear" else u"ПРОВАЛ"
                 self._text(r, title, width / 2, int(height * 0.30), 70, "#5cd67a" if self.result == "clear" else "#e75660", st, at)
-                self._text(r, u"Score  %d      \u041c\u0430\u043a\u0441. \u043a\u043e\u043c\u0431\u043e  %d" % (self.score, self.maxcombo), width / 2, int(height * 0.46), 30, "#ffffff", st, at)
-                self._text(r, u"\u043a\u043e\u0441\u043d\u0438\u0441\u044c \u044d\u043a\u0440\u0430\u043d\u0430, \u0447\u0442\u043e\u0431\u044b \u0432\u044b\u0439\u0442\u0438", width / 2, int(height * 0.56), 26, "#ffd0d8", st, at)
+                self._text(r, u"Score %d  Макс. комбо %d" % (self.score, self.maxcombo), width / 2, int(height * 0.46), 30, "#ffffff", st, at)
+                self._text(r, u"коснись экрана, чтобы выйти", width / 2, int(height * 0.56), 26, "#ffd0d8", st, at)
 
             if self._lastst is None:
                 self._lastst = st
@@ -480,14 +516,26 @@ init python:
                         renpy.music.stop(channel="music")
                     except Exception:
                         pass
-                elif sp > self.lastt + 2200:
-                    self.result = "clear"
-                    fnf_on_clear(self.track)
-                    self._play_sfx("sfx_win")
-                    try:
-                        renpy.music.stop(channel="music")
-                    except Exception:
-                        pass
+                else:
+                    # ФИКС [3]: победа только когда ПЕСНЯ доиграла до конца,
+                    # а не через 2.2 сек после последней ноты чарта.
+                    done = False
+                    if self.song and self.music_ok:
+                        if self.music_started and sp > 2000:
+                            try:
+                                done = renpy.music.get_playing(channel="music") is None
+                            except Exception:
+                                done = False
+                    else:
+                        done = sp > self.lastt + 2200
+                    if done:
+                        self.result = "clear"
+                        fnf_on_clear(self.track, self.score)
+                        self._play_sfx("sfx_win")
+                        try:
+                            renpy.music.stop(channel="music")
+                        except Exception:
+                            pass
 
             renpy.redraw(self, 0)
             return r
@@ -502,7 +550,8 @@ init python:
                         renpy.music.stop(channel="music")
                     except Exception:
                         pass
-                    return self.score
+                    # ФИКС [5]: возвращаем и результат, и очки
+                    return (self.result, self.score)
                 return None
             if ev.type == pygame.KEYDOWN and ev.key in FNF_KEYS:
                 self.press(FNF_KEYS[ev.key], sp)
@@ -518,80 +567,96 @@ transform fnf_pulse:
     ease 0.4 zoom 1.06
     repeat
 
+# ==========================================================
+# ФИКС [4]: экран выбора трека в стиле оригинального FNF
+# Чёрный фон, жёлтая полоса с персонажами, GF на колонках,
+# большое название трека, НЕДЕЛЯ 1, список треков слева.
+# ==========================================================
 screen fnf_week():
+    tag menu
     default sel = 0
     $ _nu = fnf_tracks_unlocked()
-    $ _bg = "images/fnf/bg%d.png" % (sel + 1)
-    if renpy.loadable(_bg):
-        add _bg
-    elif renpy.loadable("images/fnf/bg.png"):
-        add "images/fnf/bg.png"
-    else:
-        add Solid("#160f1f")
-    add Solid("#000000aa")
+    $ _h = config.screen_height
+    $ _ws = fnf_week_score()
+    $ _band_top = int(_h * 0.08)
+    $ _band_h = int(_h * 0.52)
+    $ _band_bot = _band_top + _band_h
+    $ _feet = _band_bot - int(_h * 0.02)
+    $ _spk_h = int(_band_h * 0.42)
 
+    add Solid("#000000")
+
+    # --- Жёлтая полоса ---
     frame:
         xfill True
-        ypos 0
-        ysize 54
-        background Solid("#000000")
-        text "НЕДЕЛЯ 1" size 34 color "#ffffff" xpos 20 yalign 0.5
-
-    frame:
-        xalign 0.5
-        ypos 60
-        xysize (int(config.screen_width * 0.94), int(config.screen_height * 0.5))
+        ypos _band_top
+        ysize _band_h
         background Solid("#f2c14e")
 
+    # --- Персонажи на жёлтой полосе ---
     if renpy.loadable("images/fnf/char_opponent.png"):
-        add "images/fnf/char_opponent.png" xpos 0.17 xanchor 0.5 yalign 0.56 zoom 0.40
+        add fnf_fit("images/fnf/char_opponent.png", int(_band_h * 0.78)) xpos 0.16 xanchor 0.5 ypos _feet yanchor 1.0
     if renpy.loadable("images/fnf/char_player.png"):
-        add "images/fnf/char_player.png" xpos 0.5 xanchor 0.5 yalign 0.56 zoom 0.46
+        add fnf_fit("images/fnf/char_player.png", int(_band_h * 0.85)) xpos 0.45 xanchor 0.5 ypos _feet yanchor 1.0
+    # Колонки + GF сидит на них
     if renpy.loadable("images/fnf/speakers.png"):
-        add "images/fnf/speakers.png" xpos 0.83 xanchor 0.5 yalign 0.62 zoom 0.30
+        add fnf_fit("images/fnf/speakers.png", _spk_h) xpos 0.79 xanchor 0.5 ypos _feet yanchor 1.0
     if renpy.loadable("images/fnf/char_gf.png"):
-        add "images/fnf/char_gf.png" xpos 0.83 xanchor 0.5 yalign 0.47 zoom 0.26
+        add fnf_fit("images/fnf/char_gf.png", int(_band_h * 0.50)) xpos 0.79 xanchor 0.5 ypos (_feet - _spk_h + int(_h * 0.02)) yanchor 1.0
 
+    # --- Верхняя чёрная шапка ---
+    text "WEEK SCORE: [_ws]" xpos 20 ypos 8 size 32 color "#ffffff"
+
+    # --- Большое название трека ---
     text fnf_track_title(sel):
         xalign 0.5
-        yalign 0.80
-        size 60
+        ypos int(_h * 0.655)
+        size 64
         color "#ffffff"
-        outlines [ (4, "#2a0d1c", 0, 0) ]
+        outlines [ (4, "#000000", 0, 0) ]
         at fnf_pulse
 
-    vbox:
-        xalign 0.965
-        yalign 0.80
-        text "СЛОЖНОСТЬ" size 22 color "#ffe08a" xalign 0.5
-        text "1" size 54 color "#ffd23f" xalign 0.5
+    # --- ◄ НОРМАЛ ► справа ---
+    hbox:
+        xalign 0.97
+        ypos int(_h * 0.66)
+        spacing 6
+        textbutton "◄":
+            text_size 48
+            text_color "#5ce1e6"
+            text_hover_color "#ffffff"
+            action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel - 1) % _nu)]
+        text "НОРМАЛ" size 44 color "#ffd23f" outlines [ (3, "#000000", 0, 0) ] yalign 0.5
+        textbutton "►":
+            text_size 48
+            text_color "#5ce1e6"
+            text_hover_color "#ffffff"
+            action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel + 1) % _nu)]
 
+    # --- НЕДЕЛЯ 1 ---
+    text "НЕДЕЛЯ 1":
+        xalign 0.5
+        ypos int(_h * 0.775)
+        size 80
+        color "#cccccc"
+        outlines [ (5, "#000000", 0, 0) ]
+
+    # --- Список треков слева ---
     vbox:
-        xpos 0.03
-        yalign 0.83
+        xpos 0.04
+        ypos int(_h * 0.66)
         spacing 2
         text "ТРЕКИ" size 26 color "#ff5da2"
-        for i in range(_nu):
-            text ("%d. %s" % (i + 1, fnf_track_title(i))) size 18 color ("#ffffff" if i == sel else "#9a8fb0")
+        for i in range(8):
+            if i < _nu:
+                text ("%d. %s" % (i + 1, fnf_track_title(i))) size 18 color ("#ffffff" if i == sel else "#9a8fb0")
+            else:
+                text ("%d. ???" % (i + 1)) size 18 color "#555555"
 
-    textbutton "◄":
-        xpos 0.01
-        yalign 0.5
-        text_size 70
-        text_color "#ffffff"
-        text_hover_color "#ff5da2"
-        action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel - 1) % _nu)]
-    textbutton "►":
-        xalign 0.99
-        yalign 0.5
-        text_size 70
-        text_color "#ffffff"
-        text_hover_color "#ff5da2"
-        action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel + 1) % _nu)]
-
+    # --- Кнопка ИГРАТЬ ---
     textbutton "ИГРАТЬ":
         xalign 0.5
-        yalign 0.965
+        yalign 0.97
         xysize (360, 66)
         background Solid("#2e7d43")
         hover_background Solid("#46cc72")
@@ -601,17 +666,18 @@ screen fnf_week():
         text_yalign 0.5
         action [Function(fnf_sfx, "sfx_confirm"), Return(sel)]
 
-    textbutton "Назад":
-        xpos 0.01
+    # --- Назад ---
+    textbutton "◄ Назад":
+        xalign 0.99
         ypos 6
-        text_size 28
+        text_size 24
         text_color "#ffd0d8"
+        text_hover_color "#ffffff"
         action [Function(fnf_sfx, "sfx_cancel"), MainMenu(confirm=False)]
 
     key "K_LEFT" action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel - 1) % _nu)]
     key "K_RIGHT" action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel + 1) % _nu)]
     key "K_RETURN" action [Function(fnf_sfx, "sfx_confirm"), Return(sel)]
-
 
 label dlc_plus:
     $ quick_menu = False
@@ -619,12 +685,14 @@ label dlc_plus:
     $ _ti = _return
     if _ti is not None:
         call fnf_battle(_ti)
-        $ _sc = _return
+        $ _res = _return
         scene expression Solid("#141018")
-        "Трек пройден! Очки: [_sc]"
-        jump dlc_plus
-    return
-
+        # ФИКС [5]: провал больше не пишет "Трек пройден"
+        if _res[0] == "clear":
+            "ПОБЕДА! Очки: [_res[1]]"
+        else:
+            "Провал... Очки: [_res[1]]"
+    jump dlc_plus
 
 label fnf_battle(track=0):
     window hide
@@ -634,7 +702,7 @@ label fnf_battle(track=0):
     if not renpy.loadable(_sng):
         $ _sng = None
     $ ui.add(FNFGame(track=track, song=_sng))
-    $ _fnf_score = ui.interact(suppress_overlay=True, suppress_underlay=True)
+    $ _fnf_res = ui.interact(suppress_overlay=True, suppress_underlay=True)
     $ quick_menu = True
     window auto
-    return _fnf_score
+    return _fnf_res
