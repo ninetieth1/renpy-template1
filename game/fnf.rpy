@@ -1,10 +1,8 @@
 # ==========================================================
-# game/fnf.rpy — FNF мини-игра (DLC+) v3
-# - Читает НАСТОЯЩИЙ формат чартов s1..s8.json (difficulties/normal/notes,
-#   t в секундах, hold = зажимные стрелки, fake пропускаются)
-# - Меню: карусель треков по центру, все персонажи ровно, GF на колонках
-# - Последовательная разблокировка треков, "душит" на треках 6-8
-# - Оптимизация под слабые телефоны (Samsung A20)
+# game/fnf.rpy — FNF мини-игра (DLC+) v6
+# v6: чарты s1.chart.json (старые sN.json — запасной вариант),
+#     кнопка 4X (все стрелки разом, на ПК — пробел),
+#     АНТИ-СПАМ: пустое нажатие = промах
 # ВАЖНО: файла game/fnf_fix.rpy быть НЕ должно!
 # ==========================================================
 
@@ -25,13 +23,19 @@ init python:
         pygame.K_k: 3, pygame.K_RIGHT: 3,
     }
 
-    # ===== НАСТРОЙКИ ВИЗУАЛА (крути эти числа, если спрайты с прозрачными полями) =====
-    FNF_SPK_H = 0.26         # высота колонок в геймплее (доля экрана)
-    FNF_GF_OVERLAP = 0.055   # насколько GF "усажена" в колонки в геймплее
-    FNF_MENU_CH_H = 0.80     # рост Игрока/Соперника в меню (доля жёлтой полосы)
-    FNF_MENU_GF_H = 0.50     # рост GF в меню
-    FNF_MENU_SPK_H = 0.40    # высота колонок в меню
-    FNF_MENU_GF_OVER = 0.045 # насколько GF "усажена" в колонки в меню (доля экрана)
+    # ===== ГЛАВНЫЕ НАСТРОЙКИ =====
+    FNF_TRACK_DIFF = ["easy", "normal", "hard", "veryhard",
+                      "impossible", "nightmare", "noteasy", "nightmare"]
+    FNF_SPEED = [1.25, 1.25, 1.25, 1.50, 1.75, 1.85, 1.85, 1.85]
+    FNF_GHOST_DMG = 0.03   # штраф хп за пустое нажатие (анти-спам)
+
+    # ===== НАСТРОЙКИ ВИЗУАЛА =====
+    FNF_SPK_H = 0.26
+    FNF_GF_OVERLAP = 0.055
+    FNF_MENU_CH_H = 0.80
+    FNF_MENU_GF_H = 0.50
+    FNF_MENU_SPK_H = 0.40
+    FNF_MENU_GF_OVER = 0.045
 
     FNF_TITLES = [
         u"Привет",
@@ -57,7 +61,6 @@ init python:
         except Exception:
             return False
 
-    # Последовательная разблокировка: открыт трек N+1, где N подряд пройдено
     def fnf_tracks_open():
         n = 0
         while n < 8 and fnf_cleared(n):
@@ -97,7 +100,6 @@ init python:
         except Exception:
             pass
 
-    # Подгон картинки под высоту в пикселях
     def fnf_fit(path, th):
         try:
             w, h = renpy.image_size(path)
@@ -120,15 +122,14 @@ init python:
                 pat = list(last)
             for (s, lane) in pat:
                 chart.append({"t": (bar * 4 + s * 0.5) * spb, "lane": lane, "side": side,
-                              "sus": 0.0, "judged": False, "hit": False})
+                              "sus": 0.0, "fake": False, "judged": False, "hit": False})
         return chart
 
-    # ФИКС: читаем РЕАЛЬНЫЙ формат чартов
-    # { "bpm": 97, "difficulties": { "normal": { "notes": [
-    #     {"t": сек, "lane": 0-3, "side": "player"/"opponent", "hold": сек, "fake": bool} ] } } }
-    def fnf_load_chart(track, difficulty="normal", bpm=150.0):
-        path = "charts/s%d.json" % (track + 1)
-        if renpy.loadable(path):
+    # ФИКС v6: сначала ищем s1.chart.json, потом старый s1.json
+    def fnf_load_chart(track, bpm=150.0):
+        for path in ("charts/s%d.chart.json" % (track + 1), "charts/s%d.json" % (track + 1)):
+            if not renpy.loadable(path):
+                continue
             try:
                 f = renpy.open_file(path)
                 raw = f.read()
@@ -140,51 +141,62 @@ init python:
                     raw = raw.decode("utf-8")
                 data = json.loads(raw)
                 bpm2 = float(data.get("bpm", bpm))
-                notes = []
                 diffs = data.get("difficulties") or {}
-                d = diffs.get(difficulty) or diffs.get("normal")
-                if d is None and diffs:
-                    d = list(diffs.values())[0]
+                want = FNF_TRACK_DIFF[track] if track < len(FNF_TRACK_DIFF) else "normal"
+                d = diffs.get(want)
+                if not d or not (d.get("notes") or []):
+                    for k in ("hard", "normal", "easy", "veryhard", "impossible", "nightmare", "noteasy"):
+                        d2 = diffs.get(k)
+                        if d2 and (d2.get("notes") or []):
+                            d = d2
+                            break
+                notes = []
+                js_speed = 1.0
                 if d:
+                    try:
+                        js_speed = float(d.get("scrollSpeed", 1) or 1)
+                    except Exception:
+                        js_speed = 1.0
                     for it in d.get("notes", []):
                         try:
-                            if it.get("fake"):
+                            fake = bool(it.get("fake"))
+                            side = 1 if it.get("side") == "player" else 0
+                            if fake and side == 0:
                                 continue
                             notes.append({
                                 "t": float(it.get("t", 0.0)) * 1000.0,
                                 "lane": int(it.get("lane", 0)) % 4,
-                                "side": 1 if it.get("side") == "player" else 0,
+                                "side": side,
                                 "sus": max(0.0, float(it.get("hold", 0) or 0)) * 1000.0,
+                                "fake": fake,
                                 "judged": False, "hit": False,
                             })
                         except Exception:
                             continue
-                if not notes:
-                    # старый простой формат на всякий случай
-                    for it in data.get("notes", []):
-                        notes.append({"t": float(it[0]), "lane": int(it[1]) % 4,
-                                      "side": int(it[2]) % 2, "sus": 0.0,
-                                      "judged": False, "hit": False})
                 if notes:
                     notes.sort(key=lambda n: n["t"])
-                    return notes, bpm2, True
+                    return notes, bpm2, True, js_speed
             except Exception:
                 pass
-        return fnf_demo_chart(bpm), bpm, False
+        return fnf_demo_chart(bpm), bpm, False, 1.0
 
     class FNFGame(renpy.Displayable):
-        def __init__(self, track=0, song=None, difficulty="normal", bpm=150.0, **kw):
+        def __init__(self, track=0, song=None, bpm=150.0, **kw):
             renpy.Displayable.__init__(self, **kw)
             self.track = int(track)
             self.song = song
             self.title = fnf_track_title(self.track)
             self.qmode = (self.track == 6)
-            self.qdrain = (self.track >= 5)   # "ДУШИТ" на треках 6-8
-            self.chart, self.bpm, self.chart_real = fnf_load_chart(self.track, difficulty, bpm)
+            self.qdrain = (self.track >= 5)
+            self.chart, self.bpm, self.chart_real, js_speed = fnf_load_chart(self.track, bpm)
             self.bpm = float(self.bpm)
+            if js_speed > 1.01:
+                spd = js_speed
+            else:
+                spd = FNF_SPEED[self.track] if self.track < len(FNF_SPEED) else 1.25
+            self.approach = 1437.5 / max(0.5, spd)
             self.leadin = 2600.0
             self.intro_done = False
-            self.approach = 1150.0
             self.started = None
             self.music_started = False
             self.music_ok = False
@@ -194,8 +206,8 @@ init python:
             self.lights = [0.0, 0.0, 0.0, 0.0]
             self.olights = [0.0, 0.0, 0.0, 0.0]
             self.down = [False, False, False, False]
-            self.holds = {}    # lane -> время конца зажатой ноты (игрок)
-            self.oholds = {}   # lane -> время конца (соперник)
+            self.holds = {}
+            self.oholds = {}
             self.popups = []
             self.splash = []
             self.flash = 0.0
@@ -203,7 +215,7 @@ init python:
             self._w, self._h = 1280, 720
             self.note = {l: "images/fnf/note_%s.png" % NAMES[l] for l in range(4)}
             self.rec = {l: "images/fnf/rec_%s.png" % NAMES[l] for l in range(4)}
-            self.bgp = "images/fnf/bg.png"   # фон ВСЕГДА bg.png
+            self.bgp = "images/fnf/bg.png"
             self.chars = {
                 "op": ("images/fnf/char_opponent.png", 0.20, 0.64),
                 "gf": ("images/fnf/char_gf.png", 0.50, 0.38),
@@ -219,9 +231,13 @@ init python:
             self._lastst = None
             self._spk = {}
             self._gf_foot = None
-            self._mlane = None
+            self._fingers = {}
+            self._touch = False
+            self._mlanes = None
+            # ФИКС v6: кнопка 4X
+            self._btn4 = (0, 0, 0, 0)
+            self._btnlit = 0.0
 
-        # Предзагрузка текстур (меньше фризов на старте)
         def visit(self):
             out = []
             paths = list(self.note.values()) + list(self.rec.values())
@@ -262,7 +278,6 @@ init python:
                     return dirp
             return base
 
-        # Пульс квантован в 7 ступеней — меньше уникальных текстур, меньше лагов
         def _pulse(self, sp):
             if sp <= 0:
                 return 1.0
@@ -289,7 +304,6 @@ init python:
             nh = self._nat_h(path, st, at)
             if not nh:
                 return
-            # Игрок НЕ пульсирует, соперник и GF — пульсируют
             pulse = 1.0 if key == "bf" else self._pulse(sp)
             z = (self._h * hf) / float(nh) * pulse
             cr = renpy.render(self._tf_get(path, z), self._w, self._h, st, at)
@@ -297,7 +311,6 @@ init python:
             dx, dy = 0, 0
             s = self.sing.get(key)
             if s and s[1] > 0 and path == base_path:
-                # Соперник дёргается заметнее (0.06), игрок мягче (0.03)
                 amp = 0.06 if key == "op" else 0.03
                 off = int(self._h * amp * (s[1] / 0.30))
                 lane = s[0]
@@ -339,14 +352,12 @@ init python:
             nw, nh = sz
             if not nw or not nh:
                 return
-            # Колонки пульсируют вместе с музыкой
             z = (self._h * FNF_SPK_H) / float(nh) * self._pulse(sp)
             cr = renpy.render(self._tf_get(path, z), self._w, self._h, st, at)
             cw, ch = cr.get_size()
             bottom = int(self._h * 0.95)
             top = bottom - ch
             r.blit(cr, (int(self._w * 0.5 - cw / 2), top))
-            # GF усажена на колонки
             self._gf_foot = top + int(self._h * FNF_GF_OVERLAP)
 
         def _text(self, r, s, x, y, size, col, st, at):
@@ -359,7 +370,6 @@ init python:
             tw, th = cr.get_size()
             r.blit(cr, (int(x - tw / 2), int(y)))
 
-        # Хвост зажимной ноты (маленькие кэшированные полоски, дёшево)
         def _tail(self, r, x, y_top, y_bot, col, st, at):
             hgt = int(y_bot - y_top)
             if hgt <= 4:
@@ -393,6 +403,15 @@ init python:
             except Exception:
                 pass
 
+        def _ghost_miss(self, lane, sp):
+            # ФИКС v6: АНТИ-СПАМ — пустое нажатие наказывается
+            if sp < 0 or self.result is not None:
+                return
+            self.combo = 0
+            self.health = max(0.0, self.health - FNF_GHOST_DMG)
+            self.counts["miss"] += 1
+            self.popups.append(["miss", 0.0, lane])
+
         def press(self, lane, sp):
             self.lights[lane] = 0.11
             best, bd = None, 99999
@@ -408,7 +427,15 @@ init python:
                         bd, best = d, n
                 i += 1
             if best is not None and bd <= 205:
-                best["judged"] = best["hit"] = True
+                best["judged"] = True
+                if best.get("fake"):
+                    best["hit"] = False
+                    self.combo = 0
+                    self.health = max(0.0, self.health - 0.045)
+                    self.counts["miss"] += 1
+                    self.popups.append(["miss", 0.0, lane])
+                    return
+                best["hit"] = True
                 self.sing["bf"] = [lane, 0.30]
                 if bd <= 60:
                     j = "sick"; self.score += 350; self.flash = 0.10
@@ -422,9 +449,15 @@ init python:
                 self.health = min(2.0, self.health + 0.023)
                 self.popups.append([j, 0.0, lane])
                 self.splash.append([lane, 0.0, j])
-                # Зажимная нота — начинаем удержание
                 if best["sus"] > 0:
                     self.holds[lane] = best["t"] + best["sus"]
+            else:
+                self._ghost_miss(lane, sp)
+
+        def press_all(self, sp):
+            self._btnlit = 0.15
+            for lane in range(4):
+                self.press(lane, sp)
 
         def render(self, width, height, st, at):
             self._w, self._h = width, height
@@ -433,7 +466,6 @@ init python:
             sp = self.songpos(st)
             r = renpy.Render(width, height)
 
-            # dt
             if self._lastst is None:
                 self._lastst = st
             dt = st - self._lastst
@@ -443,7 +475,6 @@ init python:
             elif dt > 0.05:
                 dt = 0.05
 
-            # Фон: кэшированный, всегда bg.png
             key = ("bg", width, height)
             d = self._tf.get(key)
             if d is None:
@@ -468,7 +499,6 @@ init python:
             zp = (height * 0.17) / 160.0
             zo = (height * 0.115) / 160.0
             px = [int(width * (0.5 + (i - 1.5) * 0.13)) for i in range(4)]
-            # ФИКС: дорожка соперника сдвинута влево, не залезает на игрока
             ox = [int(width * (0.06 + i * 0.062)) for i in range(4)]
             scroll = recy_p / self.approach
             self._px = px
@@ -481,14 +511,12 @@ init python:
                 except Exception:
                     self.music_ok = False
 
-            # Ресепторы (с "панчем" при нажатии — спецэффект)
             for lane in range(4):
                 zzo = zo * (1.15 if self.olights[lane] > 0 else 1.0)
                 zzp = zp * (1.18 if self.lights[lane] > 0 else 1.0)
                 self._blit_img(r, (self.note[lane] if self.olights[lane] > 0 else self.rec[lane]), ox[lane], recy_o, zzo, st, at)
                 self._blit_img(r, (self.note[lane] if self.lights[lane] > 0 else self.rec[lane]), px[lane], recy_p, zzp, st, at)
 
-            # ===== ОДИН проход по видимому окну чарта (оптимизация) =====
             n_len = len(self.chart)
             while self._i0 < n_len:
                 n = self.chart[self._i0]
@@ -505,36 +533,31 @@ init python:
                     break
                 lane = n["lane"]
                 if n["side"] == 0:
-                    # Соперник: автоигра
                     if self.result is None and sp >= 0 and not n["judged"] and sp >= n["t"]:
                         n["judged"] = n["hit"] = True
                         self.olights[lane] = 0.12
                         self.sing["op"] = [lane, 0.34]
                         if n["sus"] > 0:
                             self.oholds[lane] = n["t"] + n["sus"]
-                        # ДУШИТ (треки 6-8): каждая нота соперника отжирает хп до 15%
                         if self.qdrain and self.health > 0.15:
                             self.health = max(0.15, self.health - 0.013)
-                    # Хвост зажимной ноты соперника
                     if n["sus"] > 0 and (n["t"] + n["sus"]) > sp - 50:
                         y_head = recy_o if n["hit"] else recy_o - (n["t"] - sp) * scroll
                         y_end = recy_o - (n["t"] + n["sus"] - sp) * scroll
                         if not n["judged"] or n["hit"]:
                             self._tail(r, ox[lane], y_end, y_head, LANE_COLS[lane], st, at)
-                    # Голова
                     if not n["judged"]:
                         y = recy_o - (n["t"] - sp) * scroll
                         if -70 <= y <= height + 70:
                             self._blit_img(r, self.note[lane], ox[lane], int(y), zo, st, at)
                 else:
-                    # Игрок: просрочка = мисс
                     if self.result is None and sp >= 0 and not n["judged"] and sp > n["t"] + 205:
                         n["judged"] = True
-                        self.combo = 0
-                        self.health = max(0.0, self.health - 0.045)
-                        self.counts["miss"] += 1
-                        self.popups.append(["miss", 0.0, lane])
-                    # Хвост зажимной ноты игрока
+                        if not n.get("fake"):
+                            self.combo = 0
+                            self.health = max(0.0, self.health - 0.045)
+                            self.counts["miss"] += 1
+                            self.popups.append(["miss", 0.0, lane])
                     if n["sus"] > 0 and (n["t"] + n["sus"]) > sp - 50:
                         if not n["judged"]:
                             y_head = recy_p - (n["t"] - sp) * scroll
@@ -543,28 +566,25 @@ init python:
                         elif n["hit"] and lane in self.holds and self.holds[lane] > sp:
                             y_end = recy_p - (self.holds[lane] - sp) * scroll
                             self._tail(r, px[lane], y_end, recy_p, LANE_COLS[lane], st, at)
-                    # Голова
                     if not n["judged"]:
                         y = recy_p - (n["t"] - sp) * scroll
                         if -70 <= y <= recy_p + 46:
                             self._blit_img(r, self.note[lane], px[lane], int(y), zp, st, at)
                 i += 1
 
-            # ===== Удержания игрока: буст очков и хп =====
             for lane in list(self.holds.keys()):
                 end = self.holds[lane]
                 if sp >= end:
                     del self.holds[lane]
                     self.score += 50
                 elif not self.down[lane]:
-                    del self.holds[lane]   # отпустил раньше — просто перестаёт капать
+                    del self.holds[lane]
                 else:
                     self.lights[lane] = max(self.lights[lane], 0.06)
                     self.sing["bf"] = [lane, max(self.sing["bf"][1], 0.15)]
                     self.score += int(220 * dt)
                     self.health = min(2.0, self.health + 0.02 * dt)
 
-            # Удержания соперника: держит позу и подсветку
             for lane in list(self.oholds.keys()):
                 if sp >= self.oholds[lane]:
                     del self.oholds[lane]
@@ -572,7 +592,6 @@ init python:
                     self.olights[lane] = max(self.olights[lane], 0.06)
                     self.sing["op"] = [lane, max(self.sing["op"][1], 0.15)]
 
-            # Кольца при попадании (на SICK — двойное)
             for s in self.splash:
                 prog = s[1] / 0.32
                 if prog >= 1.0:
@@ -593,12 +612,24 @@ init python:
                 except Exception:
                     pass
 
-            # Вспышка на SICK (кэшированная, без пересоздания поверхности)
+            # ФИКС v6: кнопка 4X (жмёт все стрелки разом)
+            bs = int(height * 0.16)
+            bx4 = int(width * 0.935)
+            by4 = int(height * 0.80)
+            lit = 1 if self._btnlit > 0 else 0
+            bkey = ("btn4", bs, lit)
+            bd_ = self._tf.get(bkey)
+            if bd_ is None:
+                bd_ = Transform(Solid("#6a4fd0e0" if lit else "#241c3ac8"), xysize=(bs, bs))
+                self._tf[bkey] = bd_
+            r.blit(renpy.render(bd_, width, height, st, at), (bx4 - bs // 2, by4 - bs // 2))
+            self._text(r, u"4X", bx4, by4 - int(bs * 0.28), int(bs * 0.42), "#ffffff", st, at)
+            self._btn4 = (bx4 - bs // 2 - 10, by4 - bs // 2 - 10, bx4 + bs // 2 + 10, by4 + bs // 2 + 10)
+
             if self.flash > 0:
                 av = int(70 * (self.flash / 0.10))
                 self._solid(r, "#ffffff", max(12, (av // 12) * 12), st, at)
 
-            # HUD
             bw, bh = int(width * 0.44), 20
             bx, by = (width - bw) // 2, int(height * 0.055)
             hud = renpy.Render(bw + 8, bh + 8)
@@ -611,7 +642,6 @@ init python:
             ih = int(height * 0.12)
             self._blit_icon(r, "images/fnf/icon_opponent.png", bx + 4, by + bh / 2, ih, st, at)
             self._blit_icon(r, "images/fnf/icon_player.png", bx + bw - 4, by + bh / 2, ih, st, at)
-            # Название трека — ЖЁСТКО сверху
             self._text(r, self.title, width / 2, int(height * 0.012), 24, "#ffd0d8", st, at)
             if not self.chart_real:
                 self._text(r, u"! ЧАРТ НЕ ПРОЧИТАН — ДЕМО !", int(width * 0.15), int(height * 0.012), 20, "#e75660", st, at)
@@ -652,7 +682,6 @@ init python:
                 self._text(r, u"Score %d  Макс. комбо %d" % (self.score, self.maxcombo), width / 2, int(height * 0.46), 30, "#ffffff", st, at)
                 self._text(r, u"коснись экрана, чтобы выйти", width / 2, int(height * 0.56), 26, "#ffd0d8", st, at)
 
-            # Таймеры эффектов
             for i2 in range(4):
                 if self.lights[i2] > 0:
                     self.lights[i2] -= dt
@@ -669,8 +698,9 @@ init python:
             self.splash = [s for s in self.splash if s[1] <= 0.32]
             if self.flash > 0:
                 self.flash = max(0.0, self.flash - dt)
+            if self._btnlit > 0:
+                self._btnlit = max(0.0, self._btnlit - dt)
 
-            # Конец трека / смерть
             if self.result is None and sp >= 0:
                 if self.health <= 0:
                     self.result = "fail"
@@ -698,7 +728,6 @@ init python:
                         except Exception:
                             pass
 
-            # Чистка кэшей — защита от утечек памяти и GC-фризов
             if len(self._td) > 400:
                 self._td.clear()
             if len(self._tf) > 500:
@@ -707,17 +736,34 @@ init python:
             renpy.redraw(self, 0)
             return r
 
+        def _in_btn4(self, fx, fy):
+            x0, y0, x1, y1 = self._btn4
+            return x0 <= fx <= x1 and y0 <= fy <= y1
+
         def event(self, ev, x, y, st):
             if self.started is None:
                 return None
             sp = self.songpos(st)
+            FD = getattr(pygame, "FINGERDOWN", None)
+            FU = getattr(pygame, "FINGERUP", None)
+
             if self.result is not None:
-                if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN) or (FD is not None and ev.type == FD):
                     try:
                         renpy.music.stop(channel="music")
                     except Exception:
                         pass
                     return (self.result, self.score)
+                return None
+
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
+                for lane in range(4):
+                    self.down[lane] = True
+                self.press_all(sp)
+                raise renpy.IgnoreEvent()
+            if ev.type == pygame.KEYUP and ev.key == pygame.K_SPACE:
+                for lane in range(4):
+                    self.down[lane] = False
                 return None
             if ev.type == pygame.KEYDOWN and ev.key in FNF_KEYS:
                 lane = FNF_KEYS[ev.key]
@@ -727,16 +773,57 @@ init python:
             if ev.type == pygame.KEYUP and ev.key in FNF_KEYS:
                 self.down[FNF_KEYS[ev.key]] = False
                 return None
-            if ev.type == pygame.MOUSEBUTTONDOWN and y > self._h * 0.58:
-                lane = min(range(4), key=lambda i: abs(x - self._px[i]))
-                self._mlane = lane
-                self.down[lane] = True
-                self.press(lane, sp)
-                raise renpy.IgnoreEvent()
+
+            if FD is not None and ev.type == FD:
+                self._touch = True
+                fid = getattr(ev, "finger_id", getattr(ev, "fingerId", 0))
+                fx = getattr(ev, "x", 0.5) * self._w
+                fy = getattr(ev, "y", 0.5) * self._h
+                if self._in_btn4(fx, fy):
+                    self._fingers[fid] = [0, 1, 2, 3]
+                    for lane in range(4):
+                        self.down[lane] = True
+                    self.press_all(sp)
+                    raise renpy.IgnoreEvent()
+                if fy > self._h * 0.55:
+                    lane = min(range(4), key=lambda i: abs(fx - self._px[i]))
+                    self._fingers[fid] = [lane]
+                    self.down[lane] = True
+                    self.press(lane, sp)
+                    raise renpy.IgnoreEvent()
+                return None
+            if FU is not None and ev.type == FU:
+                fid = getattr(ev, "finger_id", getattr(ev, "fingerId", 0))
+                lanes = self._fingers.pop(fid, None)
+                if lanes:
+                    still = set()
+                    for ls in self._fingers.values():
+                        still.update(ls)
+                    for lane in lanes:
+                        if lane not in still:
+                            self.down[lane] = False
+                return None
+
+            if self._touch:
+                return None
+            if ev.type == pygame.MOUSEBUTTONDOWN:
+                if self._in_btn4(x, y):
+                    self._mlanes = [0, 1, 2, 3]
+                    for lane in range(4):
+                        self.down[lane] = True
+                    self.press_all(sp)
+                    raise renpy.IgnoreEvent()
+                if y > self._h * 0.58:
+                    lane = min(range(4), key=lambda i: abs(x - self._px[i]))
+                    self._mlanes = [lane]
+                    self.down[lane] = True
+                    self.press(lane, sp)
+                    raise renpy.IgnoreEvent()
             if ev.type == pygame.MOUSEBUTTONUP:
-                if self._mlane is not None:
-                    self.down[self._mlane] = False
-                    self._mlane = None
+                if self._mlanes:
+                    for lane in self._mlanes:
+                        self.down[lane] = False
+                    self._mlanes = None
                 return None
             return None
 
@@ -745,9 +832,6 @@ transform fnf_pulse:
     ease 0.4 zoom 1.06
     repeat
 
-# ==========================================================
-# Экран выбора трека: карусель ПО ЦЕНТРУ, без сложности и "НЕДЕЛЯ 1"
-# ==========================================================
 screen fnf_week():
     tag menu
     default sel = 0
@@ -765,14 +849,12 @@ screen fnf_week():
 
     add Solid("#000000")
 
-    # Жёлтая полоса
     frame:
         xfill True
         ypos _band_top
         ysize _band_h
         background Solid("#f2c14e")
 
-    # Персонажи: ОДИНАКОВЫЙ рост, ОДНА линия ног
     if renpy.loadable("images/fnf/char_opponent.png"):
         add fnf_fit("images/fnf/char_opponent.png", int(_band_h * FNF_MENU_CH_H)) xpos 0.18 xanchor 0.5 ypos _feet yanchor 1.0
     if renpy.loadable("images/fnf/char_player.png"):
@@ -782,7 +864,6 @@ screen fnf_week():
     if renpy.loadable("images/fnf/char_gf.png"):
         add fnf_fit("images/fnf/char_gf.png", int(_band_h * FNF_MENU_GF_H)) xpos 0.82 xanchor 0.5 ypos _gf_bot yanchor 1.0
 
-    # Шапка
     text "WEEK SCORE: [_ws]" xpos 24 ypos 10 size 38 color "#ffffff"
     textbutton "Назад":
         xalign 0.99
@@ -792,7 +873,6 @@ screen fnf_week():
         text_hover_color "#ffffff"
         action [Function(fnf_sfx, "sfx_cancel"), MainMenu(confirm=False)]
 
-    # Стрелки листания
     textbutton "◄":
         xpos 0.02
         ypos int(_h * 0.585)
@@ -808,7 +888,6 @@ screen fnf_week():
         text_hover_color "#ff5da2"
         action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", (sel + 1) % 8)]
 
-    # Название трека ПО ЦЕНТРУ, КРУПНО
     text (fnf_track_title(sel) if not _locked else "? ? ?"):
         xalign 0.5
         ypos int(_h * 0.60)
@@ -817,7 +896,6 @@ screen fnf_week():
         outlines [ (4, "#000000", 0, 0) ]
         at fnf_pulse
 
-    # Статус трека
     text "Трек [_num] / 8":
         xalign 0.5
         ypos int(_h * 0.715)
@@ -842,7 +920,6 @@ screen fnf_week():
             size 34
             color "#ffd23f"
 
-    # Номера треков по центру (зелёный = пройден, серый = закрыт)
     hbox:
         xalign 0.5
         ypos int(_h * 0.815)
@@ -854,7 +931,6 @@ screen fnf_week():
                 text_hover_color "#ff5da2"
                 action [Function(fnf_sfx, "sfx_scroll"), SetScreenVariable("sel", i)]
 
-    # ИГРАТЬ
     if not _locked:
         textbutton "ИГРАТЬ":
             xalign 0.5
