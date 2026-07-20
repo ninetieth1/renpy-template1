@@ -130,6 +130,7 @@ label splashscreen:
 
 # ==========================================================
 label story_start:
+    call my_disclaimer(MY_TEXT_BEFORE_GAME)
 
     # ===== Сцена 1 =====
     call card_timed("1970 год — 9 января — Долиновка", 4.0)
