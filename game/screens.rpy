@@ -331,6 +331,7 @@ screen navigation():
 
             textbutton _("Начать новую игру") action Start()
             textbutton _("DLC+") action Start("dlc_plus")
+            textbutton _("DLC: Советские 90-е") action Show("soviet_dlc_teaser")
             textbutton _("Продолжить") action ShowMenu("load")
             textbutton _("Настройки") action ShowMenu("preferences")
             textbutton _("О игре") action ShowMenu("about")
@@ -398,6 +399,7 @@ screen main_menu():
 
         textbutton _("Начать новую игру") action Start()
         textbutton _("DLC+") action Start("dlc_plus")
+        textbutton _("DLC: Советские 90-е") action Show("soviet_dlc_teaser")
         textbutton _("Продолжить") action ShowMenu("load")
         textbutton _("Настройки") action ShowMenu("preferences")
         textbutton _("О игре") action ShowMenu("about")
