@@ -531,6 +531,7 @@ label branch_a:
     call card_click(ending_a_text, 40)
     scene black with fade
     centered "{size=90}{k=4}КОНЕЦ{/k}{/size}"
+    $ persistent.story_done = True
     return
 
 
@@ -558,4 +559,5 @@ label branch_b:
     call card_click(ending_b_text, 40)
     scene black with fade
     centered "{size=90}{k=4}КОНЕЦ{/k}{/size}"
+    $ persistent.story_done = True
     return
