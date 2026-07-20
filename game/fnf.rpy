@@ -1,10 +1,10 @@
 # ==========================================================
-# game/fnf.rpy — FNF мини-игра (DLC+) v7.2
-# НОВОЕ: кнопка ВЫХОД в бою (справа сверху) + Esc на ПК,
-# выход из боя НЕ засчитывает победу
-# зона тапов внизу у приёмников, 4X с запасом вверх,
-# фикс длинных нот, антидубль касаний, счётчик отладки
+# game/fnf.rpy — FNF мини-игра (DLC+) v7.3
+# НОВОЕ: единый спрайт "девушка на колонках" (gf_speakers.png)
+# в бою и в меню недели
+# кнопка ВЫХОД в бою + Esc на ПК, выход НЕ засчитывает победу
 # ВАЖНО: файла game/fnf_fix.rpy быть НЕ должно!
+# Мультитач живёт в отдельном файле game/fnf_touch.rpy
 # ==========================================================
 
 define config.image_cache_size_mb = 256
@@ -33,7 +33,7 @@ init python:
     FNF_TAIL_W = 0.022     # толщина хвоста длинной ноты
 
     # ===== НАСТРОЙКИ ВИЗУАЛА =====
-    FNF_SPK_H = 0.26
+    FNF_SPK_H = 0.52       # высота спрайта "девушка на колонках" в бою
     FNF_GF_OVERLAP = 0.055
     FNF_MENU_CH_H = 0.80
     FNF_MENU_GF_H = 0.50
@@ -245,7 +245,7 @@ init python:
         def visit(self):
             out = []
             paths = list(self.note.values()) + list(self.rec.values())
-            paths += [self.bgp, "images/fnf/speakers.png",
+            paths += [self.bgp, "images/fnf/gf_speakers.png",
                       "images/fnf/icon_opponent.png", "images/fnf/icon_player.png"]
             paths += [c[0] for c in self.chars.values()]
             for key in self.chars:
@@ -342,7 +342,7 @@ init python:
 
         def _blit_speakers(self, r, sp, st, at):
             self._gf_foot = int(self._h * 0.90)
-            path = "images/fnf/speakers.png"
+            path = "images/fnf/gf_speakers.png"
             if not renpy.loadable(path):
                 return
             sz = self._spk.get(path)
@@ -494,7 +494,6 @@ init python:
             r.blit(renpy.render(d, width, height, st, at), (0, 0))
 
             self._blit_speakers(r, sp, st, at)
-            self._blit_char(r, "gf", sp, st, at)
             self._blit_char(r, "op", sp, st, at)
             self._blit_char(r, "bf", sp, st, at)
 
@@ -670,7 +669,7 @@ init python:
 
             tot = sum(self.counts.values())
             acc = int(round((self.counts["sick"] + self.counts["good"] * 0.66 + self.counts["bad"] * 0.33) / tot * 100)) if tot else 100
-            self._text(r, u"Score %d  Точность %d%%" % (self.score, acc), width / 2, by + bh + 6, 26, "#ffffff", st, at)
+            self._text(r, u"Score %d   Точность %d%%" % (self.score, acc), width / 2, by + bh + 6, 26, "#ffffff", st, at)
             if self.combo > 1:
                 self._text(r, u"%d x" % self.combo, width / 2, int(height * 0.40), 46, "#ffffff", st, at)
             for p in self.popups:
@@ -885,8 +884,6 @@ screen fnf_week():
     $ _band_top = int(_h * 0.08)
     $ _band_h = int(_h * 0.50)
     $ _feet = _band_top + _band_h - int(_h * 0.02)
-    $ _spk_px = int(_band_h * FNF_MENU_SPK_H)
-    $ _gf_bot = _feet - _spk_px + int(_h * FNF_MENU_GF_OVER)
 
     add Solid("#000000")
 
@@ -900,10 +897,8 @@ screen fnf_week():
         add fnf_fit("images/fnf/char_opponent.png", int(_band_h * FNF_MENU_CH_H)) xpos 0.18 xanchor 0.5 ypos _feet yanchor 1.0
     if renpy.loadable("images/fnf/char_player.png"):
         add fnf_fit("images/fnf/char_player.png", int(_band_h * FNF_MENU_CH_H)) xpos 0.50 xanchor 0.5 ypos _feet yanchor 1.0
-    if renpy.loadable("images/fnf/speakers.png"):
-        add fnf_fit("images/fnf/speakers.png", _spk_px) xpos 0.82 xanchor 0.5 ypos _feet yanchor 1.0
-    if renpy.loadable("images/fnf/char_gf.png"):
-        add fnf_fit("images/fnf/char_gf.png", int(_band_h * FNF_MENU_GF_H)) xpos 0.82 xanchor 0.5 ypos _gf_bot yanchor 1.0
+    if renpy.loadable("images/fnf/gf_speakers.png"):
+        add fnf_fit("images/fnf/gf_speakers.png", int(_band_h * 0.85)) xpos 0.82 xanchor 0.5 ypos _feet yanchor 1.0
 
     text "WEEK SCORE: [_ws]" xpos 24 ypos 10 size 38 color "#ffffff"
     textbutton "Назад":
