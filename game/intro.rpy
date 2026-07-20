@@ -4,7 +4,7 @@
 # ==========================================================
 
 # Видео-интро: положи файл в game/videos/intro.webm
-define MY_INTRO_VIDEO = "videos/intro.webm"
+define MY_INTRO_VIDEO = "video/intro.webm"
 # Сколько секунд крутится "ЗАГРУЗКА..." после видео
 define MY_LOAD_SECONDS = 5.0
 # Сколько секунд надо ДЕРЖАТЬ экран, чтобы плашка исчезла
