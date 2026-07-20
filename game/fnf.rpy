@@ -1,5 +1,7 @@
 # ==========================================================
-# game/fnf.rpy — FNF мини-игра (DLC+) v7.1
+# game/fnf.rpy — FNF мини-игра (DLC+) v7.2
+# НОВОЕ: кнопка ВЫХОД в бою (справа сверху) + Esc на ПК,
+# выход из боя НЕ засчитывает победу
 # зона тапов внизу у приёмников, 4X с запасом вверх,
 # фикс длинных нот, антидубль касаний, счётчик отладки
 # ВАЖНО: файла game/fnf_fix.rpy быть НЕ должно!
@@ -26,9 +28,9 @@ init python:
     FNF_TRACK_DIFF = ["easy", "normal", "hard", "veryhard",
                       "impossible", "nightmare", "noteasy", "nightmare"]
     FNF_SPEED = [1.25, 1.25, 1.25, 1.50, 1.75, 1.85, 1.85, 1.85]
-    FNF_GHOST_DMG = 0.03    # штраф хп за пустое нажатие
-    FNF_TOUCH_TOP = 0.62    # тапы принимаются только внизу, у приёмников
-    FNF_TAIL_W = 0.022      # толщина хвоста длинной ноты
+    FNF_GHOST_DMG = 0.03   # штраф хп за пустое нажатие
+    FNF_TOUCH_TOP = 0.62   # тапы принимаются только внизу, у приёмников
+    FNF_TAIL_W = 0.022     # толщина хвоста длинной ноты
 
     # ===== НАСТРОЙКИ ВИЗУАЛА =====
     FNF_SPK_H = 0.26
@@ -234,6 +236,7 @@ init python:
             self._touch = False
             self._mlanes = None
             self._btn4 = (0, 0, 0, 0)
+            self._btnq = (0, 0, 0, 0)
             self._btnlit = 0.0
             self._lastp = [-99999.0, -99999.0, -99999.0, -99999.0]
             self._dbg_fd = 0
@@ -633,6 +636,20 @@ init python:
                           bx4 + bs // 2 + 20,
                           by4 + bs // 2 + 20)
 
+            qw = int(width * 0.11)
+            qh = int(height * 0.075)
+            qx = int(width * 0.935)
+            qy = int(height * 0.065)
+            qkey = ("btnq", qw, qh)
+            qd = self._tf.get(qkey)
+            if qd is None:
+                qd = Transform(Solid("#3c142ac8"), xysize=(qw, qh))
+                self._tf[qkey] = qd
+            r.blit(renpy.render(qd, width, height, st, at), (qx - qw // 2, qy - qh // 2))
+            self._text(r, u"ВЫХОД", qx, qy - int(qh * 0.30), int(qh * 0.45), "#ff9db0", st, at)
+            self._btnq = (qx - qw // 2 - 14, qy - qh // 2 - 14,
+                          qx + qw // 2 + 14, qy + qh // 2 + 14)
+
             bw, bh = int(width * 0.44), 20
             bx, by = (width - bw) // 2, int(height * 0.055)
             hud = renpy.Render(bw + 8, bh + 8)
@@ -684,7 +701,7 @@ init python:
                 self._solid(r, "#0a0610", 216, st, at)
                 title = u"ПОБЕДА!" if self.result == "clear" else u"ПРОВАЛ"
                 self._text(r, title, width / 2, int(height * 0.30), 70, "#5cd67a" if self.result == "clear" else "#e75660", st, at)
-                self._text(r, u"Score %d  Макс. комбо %d" % (self.score, self.maxcombo), width / 2, int(height * 0.46), 30, "#ffffff", st, at)
+                self._text(r, u"Score %d   Макс. комбо %d" % (self.score, self.maxcombo), width / 2, int(height * 0.46), 30, "#ffffff", st, at)
                 self._text(r, u"коснись экрана, чтобы выйти", width / 2, int(height * 0.56), 26, "#ffd0d8", st, at)
 
             for i2 in range(4):
@@ -743,6 +760,17 @@ init python:
             x0, y0, x1, y1 = self._btn4
             return x0 <= fx <= x1 and y0 <= fy <= y1
 
+        def _in_btnq(self, fx, fy):
+            x0, y0, x1, y1 = self._btnq
+            return x0 <= fx <= x1 and y0 <= fy <= y1
+
+        def _quit_game(self):
+            try:
+                renpy.music.stop(channel="music")
+            except Exception:
+                pass
+            return ("quit", self.score)
+
         def event(self, ev, x, y, st):
             if self.started is None:
                 return None
@@ -758,6 +786,9 @@ init python:
                         pass
                     return (self.result, self.score)
                 return None
+
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                return self._quit_game()
 
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
                 for lane in range(4):
@@ -783,6 +814,8 @@ init python:
                 fid = getattr(ev, "finger_id", getattr(ev, "fingerId", 0))
                 fx = getattr(ev, "x", 0.5) * self._w
                 fy = getattr(ev, "y", 0.5) * self._h
+                if self._in_btnq(fx, fy):
+                    return self._quit_game()
                 if self._in_btn4(fx, fy):
                     self._fingers[fid] = [0, 1, 2, 3]
                     for lane in range(4):
@@ -812,6 +845,8 @@ init python:
                 self._dbg_ms += 1
                 if self._touch:
                     return None
+                if self._in_btnq(x, y):
+                    return self._quit_game()
                 if self._in_btn4(x, y):
                     self._mlanes = [0, 1, 2, 3]
                     for lane in range(4):
@@ -972,6 +1007,8 @@ label dlc_plus:
         call fnf_battle(_ti)
         $ _res = _return
         scene expression Solid("#141018")
+        if _res[0] == "quit":
+            jump dlc_plus
         if _res[0] == "clear":
             "ПОБЕДА! Очки: [_res[1]]"
         else:
