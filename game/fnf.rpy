@@ -1,8 +1,7 @@
 # ==========================================================
-# game/fnf.rpy — FNF мини-игра (DLC+) v6
-# v6: чарты s1.chart.json (старые sN.json — запасной вариант),
-#     кнопка 4X (все стрелки разом, на ПК — пробел),
-#     АНТИ-СПАМ: пустое нажатие = промах
+# game/fnf.rpy — FNF мини-игра (DLC+) v7.1
+# зона тапов внизу у приёмников, 4X с запасом вверх,
+# фикс длинных нот, антидубль касаний, счётчик отладки
 # ВАЖНО: файла game/fnf_fix.rpy быть НЕ должно!
 # ==========================================================
 
@@ -27,7 +26,9 @@ init python:
     FNF_TRACK_DIFF = ["easy", "normal", "hard", "veryhard",
                       "impossible", "nightmare", "noteasy", "nightmare"]
     FNF_SPEED = [1.25, 1.25, 1.25, 1.50, 1.75, 1.85, 1.85, 1.85]
-    FNF_GHOST_DMG = 0.03   # штраф хп за пустое нажатие (анти-спам)
+    FNF_GHOST_DMG = 0.03    # штраф хп за пустое нажатие
+    FNF_TOUCH_TOP = 0.62    # тапы принимаются только внизу, у приёмников
+    FNF_TAIL_W = 0.022      # толщина хвоста длинной ноты
 
     # ===== НАСТРОЙКИ ВИЗУАЛА =====
     FNF_SPK_H = 0.26
@@ -48,7 +49,7 @@ init python:
         u"МЫ СНОВА ВМЕСТЕ?",
     ]
 
-    LANE_COLS = {0: "#c24b99cc", 1: "#00d8ffcc", 2: "#3df05ccc", 3: "#f9393fcc"}
+    LANE_COLS = {0: "#c24b99", 1: "#00d8ff", 2: "#3df05c", 3: "#f9393f"}
 
     def fnf_track_title(i):
         if 0 <= i < len(FNF_TITLES):
@@ -125,7 +126,6 @@ init python:
                               "sus": 0.0, "fake": False, "judged": False, "hit": False})
         return chart
 
-    # ФИКС v6: сначала ищем s1.chart.json, потом старый s1.json
     def fnf_load_chart(track, bpm=150.0):
         for path in ("charts/s%d.chart.json" % (track + 1), "charts/s%d.json" % (track + 1)):
             if not renpy.loadable(path):
@@ -210,7 +210,6 @@ init python:
             self.oholds = {}
             self.popups = []
             self.splash = []
-            self.flash = 0.0
             self.lastt = max([n["t"] + n["sus"] for n in self.chart]) if self.chart else 0
             self._w, self._h = 1280, 720
             self.note = {l: "images/fnf/note_%s.png" % NAMES[l] for l in range(4)}
@@ -234,9 +233,11 @@ init python:
             self._fingers = {}
             self._touch = False
             self._mlanes = None
-            # ФИКС v6: кнопка 4X
             self._btn4 = (0, 0, 0, 0)
             self._btnlit = 0.0
+            self._lastp = [-99999.0, -99999.0, -99999.0, -99999.0]
+            self._dbg_fd = 0
+            self._dbg_ms = 0
 
         def visit(self):
             out = []
@@ -374,15 +375,17 @@ init python:
             hgt = int(y_bot - y_top)
             if hgt <= 4:
                 return
-            w = max(8, int(self._w * 0.011))
+            if y_bot < -40 or y_top > self._h + 40:
+                return
+            w = max(14, int(self._w * FNF_TAIL_W))
             q = (hgt // 12 + 1) * 12
             key = ("tail", col, w, q)
             d = self._tf.get(key)
             if d is None:
-                d = Transform(Solid(col), xysize=(w, q))
+                d = Transform(Solid(col), xysize=(w, q), alpha=0.85)
                 self._tf[key] = d
             cr = renpy.render(d, self._w, self._h, st, at)
-            r.blit(cr, (int(x - w / 2), int(max(-60, y_top))))
+            r.blit(cr, (int(x - w / 2), int(y_bot - q)))
 
         def _solid(self, r, col, alpha_q, st, at):
             key = ("ovl", col, self._w, self._h, alpha_q)
@@ -404,7 +407,6 @@ init python:
                 pass
 
         def _ghost_miss(self, lane, sp):
-            # ФИКС v6: АНТИ-СПАМ — пустое нажатие наказывается
             if sp < 0 or self.result is not None:
                 return
             self.combo = 0
@@ -413,6 +415,9 @@ init python:
             self.popups.append(["miss", 0.0, lane])
 
         def press(self, lane, sp):
+            if sp - self._lastp[lane] < 60:
+                return
+            self._lastp[lane] = sp
             self.lights[lane] = 0.11
             best, bd = None, 99999
             i = self._i0
@@ -438,7 +443,7 @@ init python:
                 best["hit"] = True
                 self.sing["bf"] = [lane, 0.30]
                 if bd <= 60:
-                    j = "sick"; self.score += 350; self.flash = 0.10
+                    j = "sick"; self.score += 350
                 elif bd <= 125:
                     j = "good"; self.score += 200
                 else:
@@ -612,10 +617,9 @@ init python:
                 except Exception:
                     pass
 
-            # ФИКС v6: кнопка 4X (жмёт все стрелки разом)
-            bs = int(height * 0.16)
-            bx4 = int(width * 0.935)
-            by4 = int(height * 0.80)
+            bs = int(height * 0.19)
+            bx4 = int(width * 0.93)
+            by4 = int(height * 0.78)
             lit = 1 if self._btnlit > 0 else 0
             bkey = ("btn4", bs, lit)
             bd_ = self._tf.get(bkey)
@@ -624,11 +628,10 @@ init python:
                 self._tf[bkey] = bd_
             r.blit(renpy.render(bd_, width, height, st, at), (bx4 - bs // 2, by4 - bs // 2))
             self._text(r, u"4X", bx4, by4 - int(bs * 0.28), int(bs * 0.42), "#ffffff", st, at)
-            self._btn4 = (bx4 - bs // 2 - 10, by4 - bs // 2 - 10, bx4 + bs // 2 + 10, by4 + bs // 2 + 10)
-
-            if self.flash > 0:
-                av = int(70 * (self.flash / 0.10))
-                self._solid(r, "#ffffff", max(12, (av // 12) * 12), st, at)
+            self._btn4 = (bx4 - bs // 2 - 20,
+                          by4 - bs // 2 - int(height * 0.12),
+                          bx4 + bs // 2 + 20,
+                          by4 + bs // 2 + 20)
 
             bw, bh = int(width * 0.44), 20
             bx, by = (width - bw) // 2, int(height * 0.055)
@@ -645,6 +648,8 @@ init python:
             self._text(r, self.title, width / 2, int(height * 0.012), 24, "#ffd0d8", st, at)
             if not self.chart_real:
                 self._text(r, u"! ЧАРТ НЕ ПРОЧИТАН — ДЕМО !", int(width * 0.15), int(height * 0.012), 20, "#e75660", st, at)
+
+            self._text(r, u"К: %d/%d" % (self._dbg_fd, self._dbg_ms), int(width * 0.035), int(height * 0.955), 16, "#666666", st, at)
 
             tot = sum(self.counts.values())
             acc = int(round((self.counts["sick"] + self.counts["good"] * 0.66 + self.counts["bad"] * 0.33) / tot * 100)) if tot else 100
@@ -696,8 +701,6 @@ init python:
             for s in self.splash:
                 s[1] += dt
             self.splash = [s for s in self.splash if s[1] <= 0.32]
-            if self.flash > 0:
-                self.flash = max(0.0, self.flash - dt)
             if self._btnlit > 0:
                 self._btnlit = max(0.0, self._btnlit - dt)
 
@@ -776,6 +779,7 @@ init python:
 
             if FD is not None and ev.type == FD:
                 self._touch = True
+                self._dbg_fd += 1
                 fid = getattr(ev, "finger_id", getattr(ev, "fingerId", 0))
                 fx = getattr(ev, "x", 0.5) * self._w
                 fy = getattr(ev, "y", 0.5) * self._h
@@ -785,7 +789,7 @@ init python:
                         self.down[lane] = True
                     self.press_all(sp)
                     raise renpy.IgnoreEvent()
-                if fy > self._h * 0.55:
+                if fy > self._h * FNF_TOUCH_TOP:
                     lane = min(range(4), key=lambda i: abs(fx - self._px[i]))
                     self._fingers[fid] = [lane]
                     self.down[lane] = True
@@ -804,21 +808,23 @@ init python:
                             self.down[lane] = False
                 return None
 
-            if self._touch:
-                return None
             if ev.type == pygame.MOUSEBUTTONDOWN:
+                self._dbg_ms += 1
+                if self._touch:
+                    return None
                 if self._in_btn4(x, y):
                     self._mlanes = [0, 1, 2, 3]
                     for lane in range(4):
                         self.down[lane] = True
                     self.press_all(sp)
                     raise renpy.IgnoreEvent()
-                if y > self._h * 0.58:
+                if y > self._h * FNF_TOUCH_TOP:
                     lane = min(range(4), key=lambda i: abs(x - self._px[i]))
                     self._mlanes = [lane]
                     self.down[lane] = True
                     self.press(lane, sp)
                     raise renpy.IgnoreEvent()
+                return None
             if ev.type == pygame.MOUSEBUTTONUP:
                 if self._mlanes:
                     for lane in self._mlanes:
@@ -956,6 +962,9 @@ screen fnf_week():
     key "K_RETURN" action (([Function(fnf_sfx, "sfx_confirm"), Return(sel)]) if not _locked else NullAction())
 
 label dlc_plus:
+    if not persistent.fnf_intro_seen:
+        $ persistent.fnf_intro_seen = True
+        call my_disclaimer(MY_TEXT_BEFORE_DLC)
     $ quick_menu = False
     call screen fnf_week
     $ _ti = _return
