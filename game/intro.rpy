@@ -5,7 +5,7 @@
 
 # ===== КЛЮЧИ ДОСТУПА =====
 # Впиши свои ключи в кавычках, через запятую. Регистр и пробелы не важны.
-define MY_KEYS = ["TEST-KEY-1", "TEST-KEY-2", "TEST-KEY-3"]
+define MY_KEYS = ["ADP-7XQ9-KM4N-V2RT-J8WP", "ALN-4PZF-8YQ2-MX7K-T5RD", "ALX-9VHK-3QPM-W8T2-NY6F", "DEV-0X9M-Q7LF-2KWR-Z8PA", "GIFT-6NRQ-W3XJ-K9TM-P4VH", "NNF-5TQ8-LW3P-X7RK-M2DZ", "DNL-8YRP-V6QM-K3TX-F9WA"]
 
 # Видео-интро: файл game/video/intro.webm
 define MY_INTRO_VIDEO = "video/intro.webm"
