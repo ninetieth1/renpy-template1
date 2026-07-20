@@ -3,7 +3,7 @@
 # тексты перед игрой/DLC, текст "Об игре"
 # ==========================================================
 
-# Видео-интро: положи файл в game/videos/intro.webm
+# Видео-интро: файл game/video/intro.webm
 define MY_INTRO_VIDEO = "video/intro.webm"
 # Сколько секунд крутится "ЗАГРУЗКА..." после видео
 define MY_LOAD_SECONDS = 5.0
@@ -21,7 +21,7 @@ init 999 python:
 
 Здесь будет твой текст об игре.""")
 
-# ===== Запуск игры: видео -> загрузка -> плашка с текстом =====
+# ===== Запуск игры: видео -> загрузка -> плашка -> музыка меню =====
 label splashscreen:
     if renpy.loadable(MY_INTRO_VIDEO):
         $ renpy.movie_cutscene(MY_INTRO_VIDEO)
@@ -30,6 +30,7 @@ label splashscreen:
     $ renpy.pause(MY_LOAD_SECONDS, hard=True)
     hide screen my_loading
     call screen my_hold_text(MY_TEXT_AFTER_LOAD)
+    play music "audio/menu.mp3" fadein 1.0
     return
 
 transform my_blink:
