@@ -997,6 +997,10 @@ screen fnf_week():
     key "K_RETURN" action (([Function(fnf_sfx, "sfx_confirm"), Return(sel)]) if not _locked else NullAction())
 
 label dlc_plus:
+    if not persistent.story_done:
+        scene expression Solid("#141018")
+        "Сначала пройди основной сюжет — DLC PLUS откроется после финала."
+        return
     if not persistent.fnf_intro_seen:
         $ persistent.fnf_intro_seen = True
         call my_disclaimer(MY_TEXT_BEFORE_DLC)
