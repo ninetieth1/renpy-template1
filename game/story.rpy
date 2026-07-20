@@ -123,10 +123,6 @@ screen hold_to_continue(msg, hold_time=8.0):
 #  Музыка на всю игру (меню + весь сюжет). Файл: game/audio/menu.mp3
 #  splashscreen запускается ОДИН раз при старте игры и играет постоянно.
 # ==========================================================
-label splashscreen:
-    play music "audio/menu.mp3" fadein 1.0
-    return
-
 
 # ==========================================================
 label story_start:
