@@ -394,7 +394,7 @@ screen main_menu():
     vbox:
         style_prefix "main_nav"
         xalign 0.5
-        yalign 0.68
+        yalign 0.85
         spacing 8
 
         textbutton _("Начать новую игру") action Start()
