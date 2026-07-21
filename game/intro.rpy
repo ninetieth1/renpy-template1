@@ -84,6 +84,7 @@ screen my_key_entry():
             background Solid("#141822")
             input:
                 value ScreenVariableInputValue("key_text")
+                copypaste True
                 length 40
                 size 34
                 color "#ffffff"
