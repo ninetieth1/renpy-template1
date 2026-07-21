@@ -33,7 +33,7 @@ init python:
     FNF_TAIL_W = 0.022     # толщина хвоста длинной ноты
 
     # ===== НАСТРОЙКИ ВИЗУАЛА =====
-    FNF_SPK_H = 0.52       # высота спрайта "девушка на колонках" в бою
+    FNF_SPK_H = 0.62       # высота спрайта "девушка на колонках" в бою
     FNF_GF_OVERLAP = 0.055
     FNF_MENU_CH_H = 0.80
     FNF_MENU_GF_H = 0.50
@@ -359,7 +359,7 @@ init python:
             z = (self._h * FNF_SPK_H) / float(nh) * self._pulse(sp)
             cr = renpy.render(self._tf_get(path, z), self._w, self._h, st, at)
             cw, ch = cr.get_size()
-            bottom = int(self._h * 0.95)
+            bottom = int(self._h * 0.88)
             top = bottom - ch
             r.blit(cr, (int(self._w * 0.5 - cw / 2), top))
             self._gf_foot = top + int(self._h * FNF_GF_OVERLAP)
