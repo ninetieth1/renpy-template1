@@ -1,0 +1,25 @@
+name: build-pc
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Ren'Py
+        uses: remarkablegames/setup-renpy@v2
+
+      - name: Build PC distribution
+        run: renpy-launcher distribute . --package win --destination dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: pc-windows
+          path: dist
