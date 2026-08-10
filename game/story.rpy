@@ -2,7 +2,8 @@
 # game/story.rpy
 # «Девяностые» (c) MR LIMBO — Release 1.0
 #
-# Требует: animations.rpy, newspaper.rpy, intro.rpy, nightmare.rpy
+# Требует: animations.rpy, newspaper.rpy, intro.rpy
+# Без видеовставок и без мини-игр.
 # ==========================================================
 
 # --- Персонажи ---
@@ -31,10 +32,6 @@ init python:
         if _bg.startswith("images/scene_") and _bg.endswith(".png") and "/" not in _bg[len("images/"):]:
             renpy.image(_bg[len("images/"):-4],
                         Transform(_bg, xysize=(1920, 1080), fit="cover", align=(0.5, 0.5)))
-
-    if renpy.loadable("video/scene_33.webm"):
-        renpy.image("scene_33", Transform(Movie(play="video/scene_33.webm", loop=True),
-                                          xysize=(1920, 1080), fit="cover", align=(0.5, 0.5)))
 
 
 # --- Безопасная смена фона: нет картинки, будет чёрный экран ---
@@ -72,30 +69,6 @@ label card_click(msg, tsize=34):
     show screen card_screen(msg, tsize)
     pause
     hide screen card_screen
-    return
-
-
-# ===== Видео без пропуска =====
-# ПОСТАВЬ РЕАЛЬНУЮ ДЛИНУ РОЛИКОВ В СЕКУНДАХ.
-define VIDEO_LEN = {
-    "scene_4_1": 8.0,
-    "scene_5_1": 7.0,
-    "scene_23_1": 4.0,
-    "scene_24_1": 8.0,
-    "scene_29_1": 6.0,
-}
-
-label play_video(vid):
-    if not renpy.loadable("video/" + vid + ".webm"):
-        return
-    $ quick_menu = False
-    window hide
-    $ renpy.scene()
-    $ renpy.show("videoplayer", what=Transform(Movie(play="video/" + vid + ".webm"),
-                 xysize=(1920, 1080), fit="cover", align=(0.5, 0.5)))
-    $ renpy.pause(VIDEO_LEN.get(vid, 5.0), hard=True)
-    $ renpy.hide("videoplayer")
-    $ quick_menu = True
     return
 
 
@@ -147,7 +120,6 @@ label story_start:
     andrey "Всему своё время. Тем более, такое чувство, что ты не сильно-то и стараешься."
     vika "Ладно, я пойду к себе в комнату."
     andrey "Ладно, только..."
-    call play_video("scene_4_1")
 
     # ===== Сцена 5 =====
     $ bg("scene_5")
@@ -161,7 +133,6 @@ label story_start:
     vika "Да, мам, я уже ложусь..."
     mama "Добрых снов вам."
     andrey "Спокойной ночи, мам."
-    call play_video("scene_5_1")
 
     # ===== Сцена 6 =====
     call card_timed("Новый день", 4.0)
@@ -336,7 +307,6 @@ label story_start:
     "Сани мягко покачивались, полозья пели свою тихую песню, и впервые за долгие часы я перевёл дух. Дед всё что-то бормотал про погоду, про неурожай, про то, как тяжело нынче люду. Я слушал вполуха, кутаясь в куртку. Тепло разлилось по телу, глаза сами закрывались."
     ded "Ты спи, спи, малец. Разбужу, как приедем."
     think "Какой хороший человек. Не думал, что мне так повезёт."
-    call play_video("scene_23_1")
 
     # ===== Сцена 24 =====
     $ bg("scene_24")
@@ -345,7 +315,6 @@ label story_start:
     ded "Да какой Чёрный Ключ! Мне в Гнилую Падь надо было, по делам. А тебе вон туда, обратно да в сторону. Я думал, тебе по пути."
     andrey "Но вы же сказали, что в ту сторону!"
     ded "Мало ли что я сказал. Не серчай. Иди вон по той дороге, к вечеру, глядишь, и доберёшься. Но-о, пошла!"
-    call play_video("scene_24_1")
     "Сани скрылись за поворотом так же внезапно, как появились. Я стоял посреди чужой дороги, и до меня медленно доходило: я не приблизился к цели. Я стал дальше. Тепло, что грело меня в санях, вытекло в один миг, и мороз снова вцепился в плечи."
     think "Как же так. Я ведь ему поверил."
 
@@ -382,7 +351,6 @@ label story_start:
     $ bg("scene_29")
     think "Ноги не идут. Голова кружится. Только чуть-чуть присяду... на минутку."
     "Мир качнулся и опрокинулся. Последнее, что я помню, как заваливаюсь куда-то в сторону от дороги, в глубокий снег. А потом темнота."
-    call play_video("scene_29_1")
 
     # ===== Сцена 30 =====
     $ bg("scene_30")
@@ -534,9 +502,6 @@ label story_start:
     "Была уже ночь. Я подошёл к сестре, сказал ей выпить лекарство. Она сразу же заснула. Была только надежда на то, что она выживет."
     andrey "Спокойной ночи, сестрёнка."
 
-    # ===== Кошмар: последний сон =====
-    call nightmare
-
     # ===== 16: финал. 15 секунд, без текста =====
     $ bg("scene_finall")
     # TODO: play music "audio/final.mp3" fadein 2.0
@@ -548,32 +513,152 @@ label story_start:
 
 
 # ==========================================================
-# Титры
+# ТИТРЫ
 # ==========================================================
+
+define CREDITS = [
+
+    ("head", u"ДЕВЯНОСТЫЕ"),
+    ("small", u"Release 1.0"),
+    ("gap", 70),
+
+    ("title", u"КОД"),
+    ("name", u"MR LIMBO"),
+    ("gap", 40),
+
+    ("title", u"ЗВУК И МУЗЫКА"),
+    ("name", u"Suno AI"),
+    ("name", u"ElevenLabs"),
+    ("name", u"VipiNikeVipi"),
+    ("name", u"SDF"),
+    ("name", u"Treblo"),
+    ("gap", 40),
+
+    ("title", u"СЮЖЕТ И ИДЕЯ"),
+    ("name", u"MR LIMBO"),
+    ("gap", 40),
+
+    ("title", u"АНИМАЦИИ"),
+    ("name", u"MR LIMBO"),
+    ("name", u"Claude Opus 5"),
+    ("gap", 40),
+
+    ("title", u"СЦЕНЫ И АРТ"),
+    ("name", u"MR LIMBO"),
+    ("name", u"GPT Image 2.0"),
+    ("name", u"Fooocus"),
+    ("gap", 40),
+
+    ("title", u"ШРИФТ"),
+    ("name", u"Kazmann Sans"),
+    ("gap", 40),
+
+    ("title", u"СО-АВТОРЫ"),
+    ("name", u"MR LIMBO (создатель)"),
+    ("name", u"AlexNPC"),
+    ("name", u"Natka-ne-Fanatka"),
+    ("name", u"Alina Play <З"),
+    ("name", u"Danil"),
+    ("name", u"CHASER2629"),
+    ("name", u"Ilya"),
+    ("name", u"Zhenya"),
+    ("name", u"Эдриан (Эдри)"),
+    ("name", u"Errarstr (Алина)"),
+    ("name", u"Vovka-Ne-Salty"),
+    ("name", u"MikiLAND"),
+    ("gap", 60),
+
+    ("title", u"ИНСТРУМЕНТЫ И РЕСУРСЫ"),
+    ("line", u"Ren'Py  ·  renpy.org"),
+    ("line", u"Python  ·  python.org"),
+    ("line", u"GitHub  ·  github.com"),
+    ("line", u"Lemma Soft Forums  ·  lemmasoft.renai.us"),
+    ("line", u"itch.io  ·  itch.io"),
+    ("line", u"Suno AI  ·  suno.com"),
+    ("line", u"ElevenLabs  ·  elevenlabs.io"),
+    ("line", u"Audacity  ·  audacityteam.org"),
+    ("line", u"FFmpeg  ·  ffmpeg.org"),
+    ("line", u"Freesound  ·  freesound.org"),
+    ("line", u"ZapSplat  ·  zapsplat.com"),
+    ("line", u"Mixkit  ·  mixkit.co"),
+    ("line", u"Pixabay  ·  pixabay.com"),
+    ("line", u"OpenGameArt  ·  opengameart.org"),
+    ("line", u"Kenney  ·  kenney.nl"),
+    ("line", u"SoundBible  ·  soundbible.com"),
+    ("line", u"Free Music Archive  ·  freemusicarchive.org"),
+    ("line", u"Incompetech  ·  incompetech.com"),
+    ("line", u"DaFont  ·  dafont.com"),
+    ("line", u"Google Fonts  ·  fonts.google.com"),
+    ("line", u"Photopea  ·  photopea.com"),
+    ("line", u"GIMP  ·  gimp.org"),
+    ("line", u"Krita  ·  krita.org"),
+    ("line", u"remove.bg  ·  remove.bg"),
+    ("line", u"TinyPNG  ·  tinypng.com"),
+    ("line", u"Squoosh  ·  squoosh.app"),
+    ("line", u"AnyConv  ·  anyconv.com"),
+    ("gap", 80),
+
+    ("title", u"ОСОБАЯ БЛАГОДАРНОСТЬ"),
+    ("line", u"Тебе. За то, что дошёл до конца."),
+    ("gap", 60),
+
+    ("head", u"ВЕЧНАЯ ПАМЯТЬ"),
+    ("gap", 120),
+    ("small", u"MR LIMBO  ·  1991"),
+]
+
 
 transform credits_move:
     ypos 1080
-    linear 38.0 ypos -1400
+    linear 110.0 ypos -5200
+
 
 screen credits_roll():
+
+    modal True
+    zorder 250
+
     add Solid("#000000")
+
     vbox:
         xalign 0.5
-        spacing 22
+        spacing 8
         at credits_move
-        text "ДЕВЯНОСТЫЕ" xalign 0.5 size 72 color "#ffffff" kerning 6
-        null height 60
-        text "Автор идеи, сценарий, разработка" xalign 0.5 size 28 color "#5c7a99"
-        text "MR LIMBO" xalign 0.5 size 44 color "#ffffff"
-        null height 40
-        text "Спасибо, что прошёл до конца" xalign 0.5 size 30 color "#c3ced9"
-        null height 200
-        text "Вечная память" xalign 0.5 size 40 color "#7f8c99"
+
+        for kind, val in CREDITS:
+
+            if kind == "gap":
+                null height val
+
+            elif kind == "head":
+                text val xalign 0.5 size 78 color "#ffffff" kerning 6
+
+            elif kind == "title":
+                null height 26
+                text val xalign 0.5 size 34 color "#00b3ff" kerning 5
+                null height 10
+
+            elif kind == "name":
+                text val xalign 0.5 size 42 color "#eef3f8"
+
+            elif kind == "small":
+                text val xalign 0.5 size 26 color "#7f8c99"
+
+            else:
+                text val xalign 0.5 size 27 color "#a9b6c2"
+
+    textbutton _("Пропустить"):
+        xalign 0.98
+        yalign 0.96
+        action Return(True)
+        text_size 26
+        text_color "#46617a"
+        text_hover_color "#ffffff"
+
 
 label credits:
     $ quick_menu = False
-    show screen credits_roll
-    $ renpy.pause(40.0, hard=True)
-    hide screen credits_roll
+    $ renpy.call_screen("credits_roll", _layer="screens")
     $ quick_menu = True
+    scene black with slowfade
     return
