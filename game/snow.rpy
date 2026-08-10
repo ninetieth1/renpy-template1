@@ -2,30 +2,53 @@
 # game/snow.rpy
 # «Девяностые» (c) MR LIMBO
 #
-# Снег-оверлей поверх уличных сцен + переключатель в настройках.
-# story.rpy править НЕ нужно: этот файл сам подменяет bg().
-#
-# Файл ролика: game/video/snow.webm (зациклен)
+# Снег на частицах вместо видео: в разы легче для телефона.
+# story.rpy править не нужно, файл сам подменяет bg().
 # ==========================================================
 
-
-# ===== Настройки =====
-define SNOW_VIDEO = "video/snow.webm"
-
-# Прозрачность оверлея (0.0 - 1.0)
-define SNOW_ALPHA = 0.55
-
-# Режим наложения:
-#   None  - если у ролика ПРОЗРАЧНЫЙ фон (VP9 с альфой)
-#   "add" - если у ролика ЧЁРНЫЙ фон, чёрное станет невидимым
-define SNOW_BLEND = "add"
-
-# Включён ли снег по умолчанию
 default persistent.snow_enabled = True
+
+# Плотность. На телефоне автоматически меньше.
+define SNOW_COUNT_PC = 90
+define SNOW_COUNT_MOBILE = 45
+
+
+init python:
+
+    def snow_count():
+        return SNOW_COUNT_MOBILE if renpy.variant("small") else SNOW_COUNT_PC
+
+    # Снежинка рисуется кодом, картинка не нужна
+    def make_flake(size, alpha):
+        return Transform(Solid("#ffffff"), xysize=(size, size),
+                         alpha=alpha, corner_radius=size / 2.0)
+
+
+init python:
+
+    snow_far = SnowBlossom(
+        make_flake(4, 0.45),
+        count=snow_count(),
+        border=60,
+        xspeed=(-30, 30),
+        yspeed=(50, 110),
+        start=2,
+        fast=True)
+
+    snow_near = SnowBlossom(
+        make_flake(8, 0.70),
+        count=int(snow_count() * 0.4),
+        border=80,
+        xspeed=(-60, 60),
+        yspeed=(120, 220),
+        start=2,
+        fast=True)
+
+
+image snow_layer = Fixed(snow_far, snow_near)
 
 
 # ===== Уличные сцены =====
-# Тут снег включается сам. Добавляй или убирай имена как хочешь.
 define SNOW_SCENES = set([
     "scene_19", "scene_20", "scene_21", "scene_22", "scene_23",
     "scene_24", "scene_25", "scene_26", "scene_27", "scene_28",
@@ -40,12 +63,8 @@ define SNOW_SCENES = set([
 
 init python:
 
-    def snow_available():
-        return renpy.loadable(SNOW_VIDEO)
-
     def snow_show():
-        """Показать снег, если он включён в настройках и ролик есть."""
-        if persistent.snow_enabled and snow_available():
+        if persistent.snow_enabled:
             renpy.show_screen("snow_overlay")
         else:
             renpy.hide_screen("snow_overlay")
@@ -55,16 +74,17 @@ init python:
 
     def snow_toggle():
         persistent.snow_enabled = not persistent.snow_enabled
-        if persistent.snow_enabled:
+        if persistent.snow_enabled and store.snow_here:
             snow_show()
         else:
             snow_hide()
 
 
+default snow_here = False
+
+
 init 10 python:
 
-    # Подменяем bg() из story.rpy: снег сам включается на улице
-    # и сам выключается в помещении.
     def bg(name, trans=None):
         renpy.scene()
         if renpy.has_image(name, exact=True):
@@ -72,7 +92,8 @@ init 10 python:
         else:
             renpy.show("black")
 
-        if name in SNOW_SCENES:
+        store.snow_here = (name in SNOW_SCENES)
+        if store.snow_here:
             snow_show()
         else:
             snow_hide()
@@ -80,130 +101,7 @@ init 10 python:
         renpy.with_statement(trans if trans is not None else store.smooth)
 
 
-# ===== Экран снега =====
 screen snow_overlay():
-
     zorder 90
-
-    if persistent.snow_enabled and renpy.loadable(SNOW_VIDEO):
-
-        if SNOW_BLEND:
-            add Transform(
-                Movie(play=SNOW_VIDEO, loop=True, start_image=Null()),
-                xysize=(config.screen_width, config.screen_height),
-                fit="cover",
-                alpha=SNOW_ALPHA,
-                blend=SNOW_BLEND)
-        else:
-            add Transform(
-                Movie(play=SNOW_VIDEO, loop=True, start_image=Null()),
-                xysize=(config.screen_width, config.screen_height),
-                fit="cover",
-                alpha=SNOW_ALPHA)
-
-
-# ==========================================================
-# Настройки с переключателем снега
-# Полностью заменяет экран из limbo_ui.rpy
-# ==========================================================
-
-init 200:
-
-    screen preferences():
-
-        tag menu
-
-        use game_menu(_("Настройки"), scroll="viewport", spacing=22):
-
-            vbox:
-                spacing 22
-                xsize 1300
-
-                if renpy.variant("pc") or renpy.variant("web"):
-
-                    frame:
-                        style "pref_card"
-                        vbox:
-                            spacing 8
-                            text _("ЭКРАН") style "pref_head"
-                            hbox:
-                                spacing 26
-                                textbutton _("Оконный"):
-                                    action Preference("display", "window")
-                                    style "radio_button"
-                                textbutton _("Полный экран"):
-                                    action Preference("display", "fullscreen")
-                                    style "radio_button"
-
-                frame:
-                    style "pref_card"
-                    vbox:
-                        spacing 6
-                        text _("ЭФФЕКТЫ") style "pref_head"
-                        textbutton _("Снег на улице"):
-                            action Function(snow_toggle)
-                            style "check_button"
-                            selected persistent.snow_enabled
-
-                frame:
-                    style "pref_card"
-                    vbox:
-                        spacing 10
-                        text _("ТЕКСТ") style "pref_head"
-
-                        hbox:
-                            spacing 24
-                            text _("Скорость текста") style "pref_item" xsize 380
-                            bar value Preference("text speed") xsize 640 yalign 0.5
-
-                        hbox:
-                            spacing 24
-                            text _("Задержка авто-режима") style "pref_item" xsize 380
-                            bar value Preference("auto-forward time") xsize 640 yalign 0.5
-
-                        textbutton _("Авто-режим после озвучки"):
-                            action Preference("auto-forward after click", "toggle")
-                            style "check_button"
-
-                frame:
-                    style "pref_card"
-                    vbox:
-                        spacing 6
-                        text _("ПРОПУСК") style "pref_head"
-                        textbutton _("Пропускать непрочитанный текст"):
-                            action Preference("skip", "toggle")
-                            style "check_button"
-                        textbutton _("Не останавливаться на выборах"):
-                            action Preference("after choices", "toggle")
-                            style "check_button"
-                        textbutton _("Пропускать переходы"):
-                            action Preference("transitions", "toggle")
-                            style "check_button"
-
-                frame:
-                    style "pref_card"
-                    vbox:
-                        spacing 10
-                        text _("ЗВУК") style "pref_head"
-
-                        if config.has_music:
-                            hbox:
-                                spacing 24
-                                text _("Музыка") style "pref_item" xsize 380
-                                bar value Preference("music volume") xsize 640 yalign 0.5
-
-                        if config.has_sound:
-                            hbox:
-                                spacing 24
-                                text _("Звуки") style "pref_item" xsize 380
-                                bar value Preference("sound volume") xsize 640 yalign 0.5
-
-                        if config.has_voice:
-                            hbox:
-                                spacing 24
-                                text _("Голос") style "pref_item" xsize 380
-                                bar value Preference("voice volume") xsize 640 yalign 0.5
-
-                        textbutton _("Выключить весь звук"):
-                            action Preference("all mute", "toggle")
-                            style "check_button"
+    if persistent.snow_enabled:
+        add "snow_layer"
