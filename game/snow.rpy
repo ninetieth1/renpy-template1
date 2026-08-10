@@ -102,3 +102,90 @@ screen snow_overlay():
     zorder 90
     if snow_ok and persistent.snow_enabled:
         add "snow_layer"
+init 200:
+
+    screen preferences():
+
+        tag menu
+
+        use game_menu(_("Настройки"), scroll="viewport", spacing=22):
+
+            vbox:
+                spacing 22
+                xsize 1300
+
+                if renpy.variant("pc") or renpy.variant("web"):
+
+                    frame:
+                        style "pref_card"
+                        vbox:
+                            spacing 8
+                            text _("ЭКРАН") style "pref_head"
+                            hbox:
+                                spacing 26
+                                textbutton _("Оконный"):
+                                    action Preference("display", "window")
+                                    style "radio_button"
+                                textbutton _("Полный экран"):
+                                    action Preference("display", "fullscreen")
+                                    style "radio_button"
+
+                frame:
+                    style "pref_card"
+                    vbox:
+                        spacing 6
+                        text _("ЭФФЕКТЫ") style "pref_head"
+                        textbutton _("Снег на улице"):
+                            action Function(snow_toggle)
+                            style "check_button"
+                            selected persistent.snow_enabled
+
+                frame:
+                    style "pref_card"
+                    vbox:
+                        spacing 10
+                        text _("ТЕКСТ") style "pref_head"
+
+                        hbox:
+                            spacing 24
+                            text _("Скорость текста") style "pref_item" xsize 380
+                            bar value Preference("text speed") xsize 640 yalign 0.5
+
+                        hbox:
+                            spacing 24
+                            text _("Задержка авто-режима") style "pref_item" xsize 380
+                            bar value Preference("auto-forward time") xsize 640 yalign 0.5
+
+                frame:
+                    style "pref_card"
+                    vbox:
+                        spacing 6
+                        text _("ПРОПУСК") style "pref_head"
+                        textbutton _("Пропускать непрочитанный текст"):
+                            action Preference("skip", "toggle")
+                            style "check_button"
+                        textbutton _("Не останавливаться на выборах"):
+                            action Preference("after choices", "toggle")
+                            style "check_button"
+
+                frame:
+                    style "pref_card"
+                    vbox:
+                        spacing 10
+                        text _("ЗВУК") style "pref_head"
+
+                        if config.has_music:
+                            hbox:
+                                spacing 24
+                                text _("Музыка") style "pref_item" xsize 380
+                                bar value Preference("music volume") xsize 640 yalign 0.5
+
+                        if config.has_sound:
+                            hbox:
+                                spacing 24
+                                text _("Звуки") style "pref_item" xsize 380
+                                bar value Preference("sound volume") xsize 640 yalign 0.5
+
+                        textbutton _("Выключить весь звук"):
+                            action Preference("all mute", "toggle")
+                            style "check_button"
