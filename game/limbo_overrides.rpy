@@ -110,6 +110,7 @@ init 100:
             size 30
             color "#5c7a9966"
             font "kazmann-sans.ttf"
+        use social_row
 
 
     # ======================================================
