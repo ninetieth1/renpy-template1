@@ -2,50 +2,47 @@
 # game/snow.rpy
 # «Девяностые» (c) MR LIMBO
 #
-# Снег на частицах вместо видео: в разы легче для телефона.
+# Снег на частицах. Лёгкий, без видео.
 # story.rpy править не нужно, файл сам подменяет bg().
 # ==========================================================
 
 default persistent.snow_enabled = True
 
-# Плотность. На телефоне автоматически меньше.
-define SNOW_COUNT_PC = 90
-define SNOW_COUNT_MOBILE = 45
+define SNOW_COUNT_PC = 80
+define SNOW_COUNT_MOBILE = 40
 
 
 init python:
 
-    def snow_count():
-        return SNOW_COUNT_MOBILE if renpy.variant("small") else SNOW_COUNT_PC
+    snow_ok = False
 
-    # Снежинка рисуется кодом, картинка не нужна
-    def make_flake(size, alpha):
-        return Transform(Solid("#ffffff"), xysize=(size, size),
-                         alpha=alpha, corner_radius=size / 2.0)
+    try:
+        _n = SNOW_COUNT_MOBILE if renpy.variant("small") else SNOW_COUNT_PC
 
+        _flake_far = Transform(Solid("#ffffff"), xysize=(4, 4), alpha=0.45)
+        _flake_near = Transform(Solid("#ffffff"), xysize=(7, 7), alpha=0.70)
 
-init python:
+        snow_far = SnowBlossom(_flake_far,
+                               count=_n,
+                               border=60,
+                               xspeed=(-30, 30),
+                               yspeed=(50, 110),
+                               start=2,
+                               fast=True)
 
-    snow_far = SnowBlossom(
-        make_flake(4, 0.45),
-        count=snow_count(),
-        border=60,
-        xspeed=(-30, 30),
-        yspeed=(50, 110),
-        start=2,
-        fast=True)
+        snow_near = SnowBlossom(_flake_near,
+                                count=int(_n * 0.4),
+                                border=80,
+                                xspeed=(-60, 60),
+                                yspeed=(120, 220),
+                                start=2,
+                                fast=True)
 
-    snow_near = SnowBlossom(
-        make_flake(8, 0.70),
-        count=int(snow_count() * 0.4),
-        border=80,
-        xspeed=(-60, 60),
-        yspeed=(120, 220),
-        start=2,
-        fast=True)
+        renpy.image("snow_layer", Fixed(snow_far, snow_near))
+        snow_ok = True
 
-
-image snow_layer = Fixed(snow_far, snow_near)
+    except Exception:
+        snow_ok = False
 
 
 # ===== Уличные сцены =====
@@ -61,10 +58,13 @@ define SNOW_SCENES = set([
 ])
 
 
+default snow_here = False
+
+
 init python:
 
     def snow_show():
-        if persistent.snow_enabled:
+        if snow_ok and persistent.snow_enabled:
             renpy.show_screen("snow_overlay")
         else:
             renpy.hide_screen("snow_overlay")
@@ -78,9 +78,6 @@ init python:
             snow_show()
         else:
             snow_hide()
-
-
-default snow_here = False
 
 
 init 10 python:
@@ -103,5 +100,5 @@ init 10 python:
 
 screen snow_overlay():
     zorder 90
-    if persistent.snow_enabled:
+    if snow_ok and persistent.snow_enabled:
         add "snow_layer"
