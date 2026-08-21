@@ -35,12 +35,10 @@ default sosnovka_trips = 0
 
 label dlc_sosnovka_start:
     call age_gate
-    call card_timed("ДЕВЯНОСТЫЕ\n\nСосновка", 4.0)
     jump dlc_ch_urok
 
 
 label dlc_ch_urok:
-    call card_timed("1991 год, 9 января, город", 4.0)
     $ dlc_show("sc_1")
     $ bgm("story.mp3", 3.0)
     $ sfx("school_bell.mp3")
