@@ -9,22 +9,18 @@ init python:
     def dlc_show(name, trans=None):
         """
         Показывает кадр DLC по имени файла без расширения.
-        Если файла нет, падаем в black, чтобы сборка не ломалась.
+        Если файла нет, используем чёрный фон.
         """
-        image_name = "images/%s.png" % name
+        image_path = "images/%s.png" % name
 
         renpy.scene()
 
-        if renpy.loadable(image_name):
-            renpy.show(
-                Transform(image_name, xysize=(1920, 1080), fit="cover", align=(0.5, 0.5)),
-                what=None
-            )
-        else:
-            if renpy.has_image("black", exact=True):
-                renpy.show("black")
-            else:
-                renpy.scene()
+        if renpy.loadable(image_path):
+            # Файлы в game/images автоматически регистрируются Ren'Py
+            # под именем файла без расширения, например sc_1.
+            renpy.show(name)
+        elif renpy.has_image("black", exact=True):
+            renpy.show("black")
 
         renpy.with_statement(trans if trans is not None else store.smooth)
 
