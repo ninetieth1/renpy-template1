@@ -6,18 +6,30 @@
 
 init python:
 
+    # Регистрируем каждый DLC-кадр как полноэкранный фон.
+    # fit="cover" заполняет экран без полос и сохраняет пропорции.
+    for _dlc_bg in renpy.list_files():
+        if _dlc_bg.startswith("images/sc_") and _dlc_bg.endswith(".png") and "/" not in _dlc_bg[len("images/"):]:
+            renpy.image(
+                _dlc_bg[len("images/"):-4],
+                Transform(
+                    _dlc_bg,
+                    xysize=(config.screen_width, config.screen_height),
+                    fit="cover",
+                    align=(0.5, 0.5)
+                )
+            )
+
     def dlc_show(name, trans=None):
         """
-        Показывает кадр DLC по имени файла без расширения.
+        Показывает полноэкранный кадр DLC по имени файла без расширения.
         Если файла нет, используем чёрный фон.
         """
         image_path = "images/%s.png" % name
 
         renpy.scene()
 
-        if renpy.loadable(image_path):
-            # Файлы в game/images автоматически регистрируются Ren'Py
-            # под именем файла без расширения, например sc_1.
+        if renpy.loadable(image_path) and renpy.has_image(name, exact=True):
             renpy.show(name)
         elif renpy.has_image("black", exact=True):
             renpy.show("black")
