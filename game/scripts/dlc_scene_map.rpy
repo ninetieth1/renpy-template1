@@ -10,15 +10,24 @@ init python:
     # fit="cover" заполняет экран без полос и сохраняет пропорции.
     for _dlc_bg in renpy.list_files():
         if _dlc_bg.startswith("images/sc_") and _dlc_bg.endswith(".png") and "/" not in _dlc_bg[len("images/"):]:
-            renpy.image(
-                _dlc_bg[len("images/"):-4],
-                Transform(
-                    _dlc_bg,
-                    xysize=(config.screen_width, config.screen_height),
-                    fit="cover",
-                    align=(0.5, 0.5)
-                )
+            _dlc_name = _dlc_bg[len("images/"):-4]
+            _dlc_displayable = Transform(
+                _dlc_bg,
+                xysize=(config.screen_width, config.screen_height),
+                fit="cover",
+                align=(0.5, 0.5)
             )
+            renpy.image(_dlc_name, _dlc_displayable)
+
+            # Старые имена второй части связываем с загруженными sc_17...sc_32.
+            if _dlc_name.startswith("sc_"):
+                _dlc_suffix = _dlc_name[3:]
+                if _dlc_suffix.isdigit() and 17 <= int(_dlc_suffix) <= 32:
+                    renpy.image("dlc_s" + _dlc_suffix, _dlc_displayable)
+
+    # Финальный старый псевдоним показывает загруженный кадр сцены 32.
+    if renpy.has_image("sc_32", exact=True):
+        renpy.image("dlc_s32_end", "sc_32")
 
     def dlc_show(name, trans=None):
         """
