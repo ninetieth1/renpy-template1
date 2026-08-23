@@ -235,7 +235,7 @@ screen dlc_select_screen():
     tag menu
     modal True
 
-    on "show" action Function(dlc_menu_audio_on)
+    on "show" action [Function(dlc_menu_audio_on), Function(yt_check_finale)]
     on "hide" action Function(dlc_menu_audio_off)
 
     key "game_menu" action Return()
@@ -249,13 +249,13 @@ screen dlc_select_screen():
     if _dlc_logo:
         add _dlc_logo:
             xpos 104
-            ypos 128
+            ypos 118
             xsize (620 if renpy.variant("small") else 560)
             at dlc_slide(0.05)
     else:
         text "ДЕВЯНОСТЫЕ":
             xpos 108
-            ypos 148
+            ypos 138
             size 92
             font "kazmann-sans.ttf"
             color "#e8eef5"
@@ -264,7 +264,7 @@ screen dlc_select_screen():
 
         text "H E R I T A G E":
             xpos 112
-            ypos 248
+            ypos 238
             size 34
             font "kazmann-sans.ttf"
             color "#8fbcff"
@@ -274,7 +274,7 @@ screen dlc_select_screen():
     # Кнопки
     vbox:
         xpos 108
-        ypos (470 if renpy.variant("small") else 520)
+        ypos (430 if renpy.variant("small") else 480)
         spacing 14
 
         textbutton _("НОВАЯ ИГРА"):
@@ -287,15 +287,20 @@ screen dlc_select_screen():
             action ShowMenu("load")
             at dlc_slide(0.28)
 
+        textbutton _("Я ЮТУБЕР"):
+            style_prefix "dlc_btn"
+            action Show("yt_screen")
+            at dlc_slide(0.36)
+
         textbutton _("НАСТРОЙКИ"):
             style_prefix "dlc_btn"
             action Show("dlc_prefs")
-            at dlc_slide(0.36)
+            at dlc_slide(0.44)
 
         textbutton _("НАЗАД"):
             style_prefix "dlc_btn"
             action Return()
-            at dlc_slide(0.44)
+            at dlc_slide(0.52)
 
     text "MR LIMBO":
         xalign 1.0
