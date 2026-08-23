@@ -1,7 +1,6 @@
 # ==========================================================
 # game/scripts/dlc_menu_hook.rpy
-# Подключение нового DLC в главное меню и в меню кодов.
-# Не трогает старый dlc_plus.
+# Меню DLC «Девяностые: Heritage» + коды глав.
 # ==========================================================
 
 init 100 python:
@@ -45,34 +44,153 @@ init 100 python:
         pass
 
 
+# ==========================================================
+# Фон меню DLC: зацикленное видео на весь экран.
+# Если видео ещё не залито, берём статичный арт, а если нет и его,
+# то просто тёмный фон. Меню не упадёт ни в одном случае.
+# ==========================================================
+
+init 190 python:
+
+    _dlc_menu_video = "video/dlc_menu.webm"
+    _dlc_menu_still = "images/dlc_menu.png"
+
+    if renpy.loadable(_dlc_menu_video):
+        _dlc_menu_layer = Movie(play=_dlc_menu_video, loop=True)
+    elif renpy.loadable(_dlc_menu_still):
+        _dlc_menu_layer = _dlc_menu_still
+    else:
+        _dlc_menu_layer = Solid("#0a0e14")
+
+    renpy.image(
+        "dlc_menu_bg",
+        Transform(
+            _dlc_menu_layer,
+            xysize=(config.screen_width, config.screen_height),
+            fit="cover",
+            align=(0.5, 0.5)
+        )
+    )
+
+    _dlc_logo = "images/logo_w.png" if renpy.loadable("images/logo_w.png") else None
+
+
+# ==========================================================
+# Меню DLC
+# ==========================================================
+
+style dlc_btn is button
+style dlc_btn_text is button_text
+
+style dlc_btn:
+    xsize 520
+    padding (26, 13, 20, 13)
+    background Solid("#0c1219d9")
+    hover_background Solid("#1c2634f2")
+    selected_background Solid("#1c2634f2")
+
+style dlc_btn_text:
+    font "kazmann-sans.ttf"
+    size 31
+    kerning 3.0
+    color "#c7d2de"
+    hover_color "#ffffff"
+    insensitive_color "#3f4b58"
+    xalign 0.0
+
+
+transform dlc_menu_in(delay=0.0):
+    alpha 0.0 xoffset -22
+    pause delay
+    easein 0.45 alpha 1.0 xoffset 0
+
+
 screen dlc_select_screen():
+
     tag menu
-    add Solid("#000000e6")
+    modal True
 
-    vbox:
-        xalign 0.5
-        yalign 0.5
-        spacing 24
+    add "dlc_menu_bg"
 
-        text "DLC":
-            xalign 0.5
-            size 62
+    # Логотип DLC
+    if _dlc_logo:
+        add _dlc_logo:
+            xpos 108
+            ypos 132
+            xsize 600
+            at dlc_menu_in(0.05)
+    else:
+        text "ДЕВЯНОСТЫЕ":
+            xpos 112
+            ypos 150
+            size 92
+            font "kazmann-sans.ttf"
             color "#ffffff"
+            kerning 5.0
+            at dlc_menu_in(0.05)
 
-        textbutton "Сосновка":
-            xalign 0.5
+        text "H E R I T A G E":
+            xpos 116
+            ypos 250
+            size 34
+            font "kazmann-sans.ttf"
+            color "#8fbcff"
+            kerning 8.0
+            at dlc_menu_in(0.12)
+
+    # Кнопки
+    vbox:
+        xpos 112
+        ypos 512
+        spacing 5
+
+        textbutton _("НОВАЯ ИГРА"):
+            style_prefix "dlc_btn"
             action Start("dlc_sosnovka_start")
-            text_size 36
-            text_color "#00b3ff"
-            text_hover_color "#ffffff"
+            at dlc_menu_in(0.18)
 
-        textbutton "Назад":
-            xalign 0.5
+        textbutton _("ПРОДОЛЖИТЬ"):
+            style_prefix "dlc_btn"
+            action ShowMenu("load")
+            at dlc_menu_in(0.24)
+
+        textbutton _("КОДЫ СЦЕН"):
+            style_prefix "dlc_btn"
+            action ShowMenu("codes_screen")
+            at dlc_menu_in(0.30)
+
+        null height 18
+
+        textbutton _("НАСТРОЙКИ"):
+            style_prefix "dlc_btn"
+            action ShowMenu("preferences")
+            at dlc_menu_in(0.36)
+
+        textbutton _("АВТОРЫ"):
+            style_prefix "dlc_btn"
+            action ShowMenu("about")
+            at dlc_menu_in(0.42)
+
+        null height 18
+
+        textbutton _("НАЗАД"):
+            style_prefix "dlc_btn"
             action Return()
-            text_size 30
-            text_color "#7f8c99"
-            text_hover_color "#ffffff"
+            at dlc_menu_in(0.48)
 
+    text "MR LIMBO":
+        xalign 1.0
+        yalign 1.0
+        xoffset -34
+        yoffset -22
+        size 26
+        font "kazmann-sans.ttf"
+        color "#5c7a9977"
+
+
+# ==========================================================
+# Главное меню с кнопкой DLC
+# ==========================================================
 
 init 200:
 
