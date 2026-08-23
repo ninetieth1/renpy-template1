@@ -10,26 +10,16 @@ default persistent.yt_unlocked = []
 
 init -5 python:
 
-    # id кадра, подпись, этап
+    # id кадра, подпись, этап, метка-триггер
     YT_SHOTS = [
-        ("sc_4_1",  u"Дорога в Сосновку",     1),
-        ("sc_13",   u"Коридор второго этажа", 1),
-        ("sc_14_2", u"На крыльце",            1),
-        ("sc_20_4", u"Она у забора",          2),
-        ("sc_23",   u"Мужик с лопатой",       2),
-        ("sc_28",   u"Восемь имён",           2),
-        ("sc_31",   u"Рассвет у стены",      3),
+        ("sc_4_1",  u"Дорога в Сосновку",     1, "dlc_ch_doroga"),
+        ("sc_13",   u"Коридор второго этажа", 1, "dlc_ch_za_dveryu"),
+        ("sc_14_2", u"На крыльце",            1, "dlc_ch_krylco"),
+        ("sc_20_4", u"Она у забора",          2, "dlc_ch_son_1"),
+        ("sc_23",   u"Мужик с лопатой",       2, "dlc_ch_muzhik"),
+        ("sc_28",   u"Восемь имён",           2, "dlc_ch_stena"),
+        ("sc_31",   u"Рассвет у стены",      3, None),
     ]
-
-    # Где что открывается
-    YT_UNLOCK_AT = {
-        "dlc_ch_doroga":    ["sc_4_1"],
-        "dlc_ch_za_dveryu": ["sc_13"],
-        "dlc_ch_krylco":    ["sc_14_2"],
-        "dlc_ch_son_1":     ["sc_20_4"],
-        "dlc_ch_muzhik":    ["sc_23"],
-        "dlc_ch_stena":     ["sc_28"],
-    }
 
     YT_THUMB_W = 260 if renpy.variant("small") else 300
     YT_THUMB_H = int(YT_THUMB_W * 9 / 16)
@@ -37,30 +27,54 @@ init -5 python:
 
 init 5 python:
 
+    def yt_trigger(shot_id):
+        for sid, name, stage, trig in YT_SHOTS:
+            if sid == shot_id:
+                return trig
+        return None
+
     def yt_is_open(shot_id):
+        """Кадр открыт, если его сцена уже была пройдена хотя бы раз."""
         try:
-            return shot_id in persistent.yt_unlocked
+            if persistent.yt_unlocked and shot_id in persistent.yt_unlocked:
+                return True
+        except Exception:
+            pass
+
+        # Финальный кадр зависит от прохождения истории.
+        trig = yt_trigger(shot_id)
+        if trig is None:
+            try:
+                return bool(persistent.completed)
+            except Exception:
+                return False
+
+        # Основной признак: движок сам помнит, какие метки видел игрок.
+        try:
+            return bool(renpy.seen_label(trig))
         except Exception:
             return False
 
     def yt_open_count():
-        return len([s for s, n, st in YT_SHOTS if yt_is_open(s)])
+        return len([s for s, n, st, tr in YT_SHOTS if yt_is_open(s)])
 
     def yt_total():
         return len(YT_SHOTS)
 
     def yt_unlock(ids):
         """Открывает кадры и сообщает об этом в углу."""
-        if persistent.yt_unlocked is None:
-            persistent.yt_unlocked = []
+        known = list(persistent.yt_unlocked or [])
 
         fresh = []
         for sid in ids:
             if not renpy.loadable("images/%s.png" % sid):
                 continue
-            if sid not in persistent.yt_unlocked:
-                persistent.yt_unlocked.append(sid)
+            if sid not in known:
+                known.append(sid)
                 fresh.append(sid)
+
+        # Перезаписываем список целиком, иначе изменение может не сохраниться.
+        persistent.yt_unlocked = known
 
         if fresh:
             try:
@@ -69,13 +83,20 @@ init 5 python:
             except Exception:
                 pass
 
+    def yt_sync():
+        """Собирает всё, что игрок уже видел, без уведомлений."""
+        known = list(persistent.yt_unlocked or [])
+        for sid, name, stage, trig in YT_SHOTS:
+            if sid in known:
+                continue
+            if not renpy.loadable("images/%s.png" % sid):
+                continue
+            if yt_is_open(sid):
+                known.append(sid)
+        persistent.yt_unlocked = known
+
     def yt_check_finale():
-        """Финальный кадр открывается, когда история пройдена."""
-        try:
-            if persistent.completed and not yt_is_open("sc_31"):
-                yt_unlock(["sc_31"])
-        except Exception:
-            pass
+        yt_sync()
 
     def yt_thumb(shot_id):
         return Transform(
@@ -87,12 +108,17 @@ init 5 python:
 
 
 # ==========================================================
-# Отслеживание прогресса
+# Уведомление по ходу игры
 # ==========================================================
 
 init 310 python:
 
     _yt_prev_label_cb = config.label_callback
+
+    YT_UNLOCK_AT = {}
+    for _sid, _name, _stage, _trig in YT_SHOTS:
+        if _trig:
+            YT_UNLOCK_AT.setdefault(_trig, []).append(_sid)
 
     def _yt_label_cb(label_name, abnormal):
 
@@ -113,10 +139,6 @@ label yt_finale_unlock:
     $ yt_unlock(["sc_31"])
     return
 
-
-# ==========================================================
-# Уведомление в углу
-# ==========================================================
 
 transform yt_note_in:
     alpha 0.0 xoffset 90
@@ -179,6 +201,8 @@ screen yt_screen():
     modal True
     zorder 140
 
+    on "show" action Function(yt_sync)
+
     key "game_menu" action Hide("yt_screen")
 
     default yt_open = yt_open_count()
@@ -201,7 +225,6 @@ screen yt_screen():
             size 26
             color "#8c9bab"
 
-    # Имя на превью
     frame:
         xpos 108
         ypos 206
@@ -232,7 +255,6 @@ screen yt_screen():
                 color "#5c7a99"
                 yalign 0.5
 
-    # Сетка кадров
     viewport:
         xpos 108
         ypos 318
@@ -247,7 +269,7 @@ screen yt_screen():
             spacing 20
             xfill False
 
-            for sid, sname, stage in YT_SHOTS:
+            for sid, sname, stage, strig in YT_SHOTS:
 
                 vbox:
                     spacing 8
@@ -289,7 +311,8 @@ screen yt_screen():
 
 
 # ==========================================================
-# Превью во весь экран
+# Превью во весь экран.
+# Логотип маленький, полосы затемнения тонкие, кадр виден полностью.
 # ==========================================================
 
 screen yt_shot(shot=""):
@@ -306,36 +329,30 @@ screen yt_shot(shot=""):
         align=(0.5, 0.5)
     )
 
-    add Transform(Solid("#000000"), ysize=260, yalign=0.0, alpha=0.45)
-    add Transform(Solid("#000000"), ysize=300, yalign=1.0, alpha=0.55)
+    add Transform(Solid("#000000"), ysize=118, yalign=0.0, alpha=0.38)
+    add Transform(Solid("#000000"), ysize=150, yalign=1.0, alpha=0.46)
 
     if _dlc_logo:
         add _dlc_logo:
-            xpos 92
-            ypos 74
-            xsize (560 if not renpy.variant("small") else 640)
+            xpos 60
+            ypos 34
+            xsize (300 if not renpy.variant("small") else 360)
 
     vbox:
-        xpos 96
-        yalign 0.86
-        spacing 10
+        xpos 62
+        yalign 0.9
+        spacing 8
 
-        add Transform(Solid("#ffffff"), xysize=(120, 3), alpha=0.85)
+        add Transform(Solid("#ffffff"), xysize=(96, 3), alpha=0.85)
 
         text "[persistent.yt_name!q]":
-            size (54 if not renpy.variant("small") else 62)
+            size (46 if not renpy.variant("small") else 54)
             font "kazmann-sans.ttf"
             color "#ffffff"
             kerning 4
 
-    text _("На ПК клавиша S сохраняет скриншот в папку игры"):
-        xalign 0.5
-        yalign 0.985
-        size 22
-        color "#8c9bab"
-
     textbutton _("ЗАКРЫТЬ"):
         style_prefix "dlc_btn"
         xalign 0.97
-        yalign 0.90
+        yalign 0.06
         action Hide("yt_shot")
