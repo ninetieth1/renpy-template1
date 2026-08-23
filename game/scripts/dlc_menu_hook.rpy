@@ -69,45 +69,46 @@ init -10 python:
 
 
 # ==========================================================
-# Снег для меню: средние шестилучевые снежинки, не точки.
+# Снег для меню: мягкие размытые хлопья, падают быстро.
 # ==========================================================
 
 init 185 python:
 
     dlc_snow_ok = False
 
-    def _dlc_flake(size, alpha):
-        bar_w = max(2, int(size * 0.16))
-        bar = Transform(Solid("#ffffff"), xysize=(size, bar_w))
-        star = Fixed(
-            Transform(bar, align=(0.5, 0.5)),
-            Transform(bar, rotate=60, align=(0.5, 0.5)),
-            Transform(bar, rotate=120, align=(0.5, 0.5)),
-            xysize=(size + 6, size + 6)
-        )
-        return Transform(star, alpha=alpha)
+    def _dlc_flake(size, alpha, blur_r):
+        """Круглое размытое пятно вместо геометричной звёздочки."""
+        try:
+            return Transform(
+                Solid("#ffffff"),
+                xysize=(size, size),
+                blur=blur_r,
+                alpha=alpha
+            )
+        except Exception:
+            return Transform(Solid("#ffffff"), xysize=(size, size), alpha=alpha)
 
     try:
         _small = renpy.variant("small")
-        _cnt = 26 if _small else 46
+        _cnt = 34 if _small else 58
 
         _dlc_snow_far = SnowBlossom(
-            _dlc_flake(15, 0.34),
+            _dlc_flake(7, 0.40, 3),
             count=_cnt,
-            border=90,
-            xspeed=(-26, 26),
-            yspeed=(45, 90),
-            start=3,
+            border=110,
+            xspeed=(-70, 70),
+            yspeed=(240, 400),
+            start=2,
             fast=True
         )
 
         _dlc_snow_near = SnowBlossom(
-            _dlc_flake(24, 0.52),
-            count=int(_cnt * 0.45),
-            border=110,
-            xspeed=(-48, 48),
-            yspeed=(95, 165),
-            start=3,
+            _dlc_flake(13, 0.34, 6),
+            count=int(_cnt * 0.4),
+            border=140,
+            xspeed=(-120, 120),
+            yspeed=(430, 660),
+            start=2,
             fast=True
         )
 
@@ -158,7 +159,7 @@ init 190 python:
     # ---------- звук меню: без музыки, только зимний ветер ----------
 
     def dlc_menu_audio_on():
-        renpy.music.stop(channel="music", fadeout=1.0)
+        renpy.music.stop(channel="music", fadeout=0.8)
         if renpy.loadable("audio/winter.mp3"):
             renpy.music.play(
                 "audio/winter.mp3",
@@ -167,6 +168,14 @@ init 190 python:
                 fadein=1.5,
                 relative_volume=0.55
             )
+
+    def dlc_menu_keep_quiet():
+        """Движок сам возвращает музыку главного меню, поэтому глушим её повторно."""
+        try:
+            if renpy.music.get_playing(channel="music"):
+                renpy.music.stop(channel="music", fadeout=0.4)
+        except Exception:
+            pass
 
     def dlc_menu_wind_off():
         renpy.music.stop(channel="ambient", fadeout=0.6)
@@ -237,6 +246,9 @@ screen dlc_select_screen():
 
     on "show" action [Function(dlc_menu_audio_on), Function(yt_check_finale)]
     on "hide" action Function(dlc_menu_audio_off)
+
+    # Движок любит сам поднимать музыку главного меню: держим тишину.
+    timer 0.5 repeat True action Function(dlc_menu_keep_quiet)
 
     key "game_menu" action Return()
 
@@ -411,7 +423,7 @@ init 300:
 
 
 # ==========================================================
-# Главное меню с кнопкой DLC
+# Главное меню с кнопкой DLC и выходом на всех платформах
 # ==========================================================
 
 init 200:
@@ -446,8 +458,7 @@ init 200:
             if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
                 textbutton _("Помощь") action ShowMenu("help")
 
-            if renpy.variant("pc"):
-                textbutton _("Выход") action Quit(confirm=True)
+            textbutton _("Выход") action Quit(confirm=True)
 
         text "MR LIMBO":
             xalign 1.0
