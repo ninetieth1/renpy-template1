@@ -12,13 +12,13 @@ init -5 python:
 
     # id кадра, подпись, этап
     YT_SHOTS = [
-        ("sc_4_1",  u"Дорога в Сосновку",   1),
+        ("sc_4_1",  u"Дорога в Сосновку",     1),
         ("sc_13",   u"Коридор второго этажа", 1),
-        ("sc_14_2", u"На крыльце",          1),
-        ("sc_20_4", u"Она у забора",        2),
-        ("sc_23",   u"Мужик с лопатой",     2),
-        ("sc_28",   u"Восемь имён",         2),
-        ("sc_31",   u"Рассвет у стены",    3),
+        ("sc_14_2", u"На крыльце",            1),
+        ("sc_20_4", u"Она у забора",          2),
+        ("sc_23",   u"Мужик с лопатой",       2),
+        ("sc_28",   u"Восемь имён",           2),
+        ("sc_31",   u"Рассвет у стены",      3),
     ]
 
     # Где что открывается
@@ -37,12 +37,6 @@ init -5 python:
 
 init 5 python:
 
-    def yt_title(shot_id):
-        for sid, name, stage in YT_SHOTS:
-            if sid == shot_id:
-                return name
-        return shot_id
-
     def yt_is_open(shot_id):
         try:
             return shot_id in persistent.yt_unlocked
@@ -51,6 +45,9 @@ init 5 python:
 
     def yt_open_count():
         return len([s for s, n, st in YT_SHOTS if yt_is_open(s)])
+
+    def yt_total():
+        return len(YT_SHOTS)
 
     def yt_unlock(ids):
         """Открывает кадры и сообщает об этом в углу."""
@@ -71,6 +68,14 @@ init 5 python:
                 renpy.restart_interaction()
             except Exception:
                 pass
+
+    def yt_check_finale():
+        """Финальный кадр открывается, когда история пройдена."""
+        try:
+            if persistent.completed and not yt_is_open("sc_31"):
+                yt_unlock(["sc_31"])
+        except Exception:
+            pass
 
     def yt_thumb(shot_id):
         return Transform(
@@ -104,7 +109,6 @@ init 310 python:
     config.label_callback = _yt_label_cb
 
 
-# Финальный кадр открывается, когда DLC пройдено.
 label yt_finale_unlock:
     $ yt_unlock(["sc_31"])
     return
@@ -155,7 +159,7 @@ screen yt_note(shot=None, extra=0):
                     kerning 3
 
                 if extra > 0:
-                    text _("И ещё [extra]. Смотри раздел «Я ютубер»"):
+                    text _("И ещё [extra]. Раздел «Я ютубер» в меню DLC"):
                         size 24
                         color "#c2cfdc"
                 else:
@@ -177,11 +181,14 @@ screen yt_screen():
 
     key "game_menu" action Hide("yt_screen")
 
+    default yt_open = yt_open_count()
+    default yt_all = yt_total()
+
     add Solid("#03060af2")
 
     vbox:
         xpos 108
-        ypos 92
+        ypos 88
         spacing 10
 
         text _("Я ЮТУБЕР"):
@@ -197,8 +204,8 @@ screen yt_screen():
     # Имя на превью
     frame:
         xpos 108
-        ypos 212
-        xsize (1180 if not renpy.variant("small") else 1600)
+        ypos 206
+        xsize 1180
         padding (24, 18, 24, 18)
         background Solid("#070d15cc")
 
@@ -228,9 +235,9 @@ screen yt_screen():
     # Сетка кадров
     viewport:
         xpos 108
-        ypos 320
-        xsize (1700 if not renpy.variant("small") else 1740)
-        ysize (560 if not renpy.variant("small") else 520)
+        ypos 318
+        xsize 1700
+        ysize (540 if not renpy.variant("small") else 500)
         draggable True
         mousewheel True
         scrollbars "vertical"
@@ -299,7 +306,6 @@ screen yt_shot(shot=""):
         align=(0.5, 0.5)
     )
 
-    # лёгкое затемнение по краям, чтобы текст читался
     add Transform(Solid("#000000"), ysize=260, yalign=0.0, alpha=0.45)
     add Transform(Solid("#000000"), ysize=300, yalign=1.0, alpha=0.55)
 
@@ -322,7 +328,7 @@ screen yt_shot(shot=""):
             color "#ffffff"
             kerning 4
 
-    text _("На ПК: клавиша S сохраняет скриншот в папку игры"):
+    text _("На ПК клавиша S сохраняет скриншот в папку игры"):
         xalign 0.5
         yalign 0.985
         size 22
