@@ -7,7 +7,7 @@
 init python:
 
     # Регистрируем каждый DLC-кадр как полноэкранный фон.
-    # fit="cover" заполняет экран без полос и сохраняет пропорции.
+    # Важно: регистрируем имя изображения, а не Transform в renpy.show().
     for _dlc_bg in renpy.list_files():
         if _dlc_bg.startswith("images/sc_") and _dlc_bg.endswith(".png") and "/" not in _dlc_bg[len("images/"):]:
             _dlc_name = _dlc_bg[len("images/"):-4]
@@ -38,10 +38,13 @@ init python:
 
         renpy.scene()
 
+        # Передаём в renpy.show() только зарегистрированное строковое имя.
+        # Нельзя передавать сюда Transform как positional argument: Ren'Py
+        # пытается обработать его как имя и падает с AttributeError на split().
         if renpy.loadable(image_path) and renpy.has_image(name, exact=True):
-            renpy.show(name)
+            renpy.show(name, layer="master")
         elif renpy.has_image("black", exact=True):
-            renpy.show("black")
+            renpy.show("black", layer="master")
 
         renpy.with_statement(trans if trans is not None else store.smooth)
 
