@@ -72,7 +72,17 @@ init 190 python:
         )
     )
 
-    _dlc_logo = "images/logo_w.png" if renpy.loadable("images/logo_w.png") else None
+    # Логотип: берём первый найденный вариант, чтобы не зависеть от имени файла.
+    _dlc_logo = None
+    for _cand in (
+        "images/logo.png",
+        "images/logo_ice2.png",
+        "images/logo_ice.png",
+        "images/logo_w.png",
+    ):
+        if renpy.loadable(_cand):
+            _dlc_logo = _cand
+            break
 
 
 # ==========================================================
