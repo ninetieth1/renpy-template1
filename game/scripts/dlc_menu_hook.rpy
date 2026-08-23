@@ -198,8 +198,7 @@ style dlc_btn:
     hover_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#ffffff", 2, "#0c1a2799")
     selected_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#c8d8e8", 2, "#0c1a2799")
     selected_hover_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#ffffff", 2, "#0c1a2799")
-    insensitive_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#48566433", 2, "#0509
-0f40")
+    insensitive_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#48566433", 2, "#05090f40")
     hover_xoffset 12
     selected_xoffset 12
 
