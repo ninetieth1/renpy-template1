@@ -1,7 +1,5 @@
-# ==========================================================
-# Финальный фон меню DLC после прохождения.
-# Файл для видео: game/video/dlc_menu_complete.webm
-# ==========================================================
+# Финальный фон и возврат в меню DLC после прохождения.
+# Положите готовый ролик в: game/video/dlc_menu_complete.webm
 
 init 191 python:
 
@@ -10,7 +8,6 @@ init 191 python:
     DLC_COMPLETE_STILL = "images/dlc_menu_complete.png"
 
     def dlc_refresh_menu_background():
-        """Выбирает фон DLC и всегда отключает звук у фонового видео."""
         try:
             completed = bool(getattr(persistent, "completed", False))
         except Exception:
@@ -29,15 +26,9 @@ init 191 python:
 
         renpy.image(
             "dlc_menu_bg",
-            Transform(
-                source,
-                xysize=(config.screen_width, config.screen_height),
-                fit="cover",
-                align=(0.5, 0.5)
-            )
+            Transform(source, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
         )
 
-    # При запуске игры сразу восстанавливает нужный фон из persistent.
     dlc_refresh_menu_background()
 
     def dlc_mark_completed_and_open_menu():
@@ -52,3 +43,17 @@ label dlc_completed_menu:
     $ dlc_mark_completed_and_open_menu()
     call screen dlc_select_screen
     return
+
+
+# После завершения верхнеуровневого DLC Ren'Py вызовет этот callback
+# вместо обычного возврата в главное меню игры.
+init 400 python:
+    _dlc_old_end_game_callback = getattr(config, "end_game_callback", None)
+
+    def _dlc_end_game_callback():
+        if getattr(persistent, "completed", False) and renpy.has_label("dlc_completed_menu"):
+            renpy.call_in_new_context("dlc_completed_menu")
+        elif _dlc_old_end_game_callback is not None:
+            _dlc_old_end_game_callback()
+
+    config.end_game_callback = _dlc_end_game_callback
