@@ -1,4 +1,4 @@
-# Финальный фон и возврат в меню DLC после прохождения.
+# Финальный фон меню DLC после прохождения.
 # Файл видео: game/video/dlc_menu_complete.webm
 
 init 191 python:
@@ -26,12 +26,17 @@ init 191 python:
 
         renpy.image(
             "dlc_menu_bg",
-            Transform(source, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
+            Transform(
+                source,
+                xysize=(config.screen_width, config.screen_height),
+                fit="cover",
+                align=(0.5, 0.5)
+            )
         )
 
     dlc_refresh_menu_background()
 
-    def dlc_mark_completed_and_open_menu():
+    def dlc_mark_completed():
         persistent.completed = True
         renpy.save_persistent()
         dlc_refresh_menu_background()
@@ -41,19 +46,6 @@ init 191 python:
 
 
 label dlc_completed_menu:
-    $ dlc_mark_completed_and_open_menu()
+    $ dlc_mark_completed()
     call screen dlc_select_screen
     return
-
-
-# Возврат в меню DLC после завершения истории.
-init 400 python:
-    _dlc_old_end_game_callback = getattr(config, "end_game_callback", None)
-
-    def _dlc_end_game_callback():
-        if getattr(persistent, "completed", False) and renpy.has_label("dlc_completed_menu"):
-            renpy.call_in_new_context("dlc_completed_menu")
-        elif _dlc_old_end_game_callback is not None:
-            _dlc_old_end_game_callback()
-
-    config.end_game_callback = _dlc_end_game_callback
