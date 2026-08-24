@@ -20,9 +20,13 @@ define STORY_CODES = {
     "6767": ("ch_nazad",    u"Глава 10. Дорога домой"),
     "1110": ("ch_milicia",  u"Глава 11. Милиция"),
     "1120": ("ch_final",    u"Глава 12. Последняя ночь"),
+
+    # Тестовый код: сразу перед последней сценой DLC.
+    "24012011": ("dlc_ch_stena", u"DLC. Финальная сцена"),
 }
 
 
+# DLC-коды длиннее обычных кодов основной игры.
 default code_input = ""
 default code_msg = ""
 
@@ -30,7 +34,7 @@ default code_msg = ""
 init python:
 
     def code_add(d):
-        if len(store.code_input) < 6:
+        if len(store.code_input) < 8:
             store.code_input += d
             store.code_msg = ""
 
