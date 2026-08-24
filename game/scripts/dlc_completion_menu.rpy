@@ -1,5 +1,5 @@
 # Финальный фон и возврат в меню DLC после прохождения.
-# Положите готовый ролик в: game/video/dlc_menu_complete.webm
+# Файл видео: game/video/dlc_menu_complete.webm
 
 init 191 python:
 
@@ -14,11 +14,11 @@ init 191 python:
             completed = False
 
         if completed and renpy.loadable(DLC_COMPLETE_VIDEO):
-            source = Movie(play=DLC_COMPLETE_VIDEO, loop=True, audio=False)
+            source = Movie(play=DLC_COMPLETE_VIDEO, loop=True, channel="movie")
         elif completed and renpy.loadable(DLC_COMPLETE_STILL):
             source = DLC_COMPLETE_STILL
         elif renpy.loadable(DLC_BASE_VIDEO):
-            source = Movie(play=DLC_BASE_VIDEO, loop=True, audio=False)
+            source = Movie(play=DLC_BASE_VIDEO, loop=True, channel="movie")
         elif renpy.loadable("images/dlc_menu.png"):
             source = "images/dlc_menu.png"
         else:
@@ -37,6 +37,7 @@ init 191 python:
         dlc_refresh_menu_background()
         renpy.music.stop(channel="music", fadeout=0.5)
         renpy.music.stop(channel="ambient", fadeout=0.5)
+        renpy.music.stop(channel="movie", fadeout=0.5)
 
 
 label dlc_completed_menu:
@@ -45,8 +46,7 @@ label dlc_completed_menu:
     return
 
 
-# После завершения верхнеуровневого DLC Ren'Py вызовет этот callback
-# вместо обычного возврата в главное меню игры.
+# Возврат в меню DLC после завершения истории.
 init 400 python:
     _dlc_old_end_game_callback = getattr(config, "end_game_callback", None)
 
