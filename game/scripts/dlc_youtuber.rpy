@@ -10,7 +10,6 @@ default persistent.yt_unlocked = []
 
 init -5 python:
 
-    # id кадра, подпись, этап, метка-триггер
     YT_SHOTS = [
         ("sc_4_1",  u"Дорога в Сосновку",     1, "dlc_ch_doroga"),
         ("sc_13",   u"Коридор второго этажа", 1, "dlc_ch_za_dveryu"),
@@ -21,7 +20,7 @@ init -5 python:
         ("sc_31",   u"Рассвет у стены",      3, None),
     ]
 
-    YT_THUMB_W = 260 if renpy.variant("small") else 300
+    YT_THUMB_W = 300 if renpy.variant("small") else 340
     YT_THUMB_H = int(YT_THUMB_W * 9 / 16)
 
 
@@ -34,14 +33,12 @@ init 5 python:
         return None
 
     def yt_is_open(shot_id):
-        """Кадр открыт, если его сцена уже была пройдена хотя бы раз."""
         try:
             if persistent.yt_unlocked and shot_id in persistent.yt_unlocked:
                 return True
         except Exception:
             pass
 
-        # Финальный кадр зависит от прохождения истории.
         trig = yt_trigger(shot_id)
         if trig is None:
             try:
@@ -49,7 +46,6 @@ init 5 python:
             except Exception:
                 return False
 
-        # Основной признак: движок сам помнит, какие метки видел игрок.
         try:
             return bool(renpy.seen_label(trig))
         except Exception:
@@ -62,9 +58,7 @@ init 5 python:
         return len(YT_SHOTS)
 
     def yt_unlock(ids):
-        """Открывает кадры и сообщает об этом в углу."""
         known = list(persistent.yt_unlocked or [])
-
         fresh = []
         for sid in ids:
             if not renpy.loadable("images/%s.png" % sid):
@@ -73,7 +67,6 @@ init 5 python:
                 known.append(sid)
                 fresh.append(sid)
 
-        # Перезаписываем список целиком, иначе изменение может не сохраниться.
         persistent.yt_unlocked = known
 
         if fresh:
@@ -84,7 +77,6 @@ init 5 python:
                 pass
 
     def yt_sync():
-        """Собирает всё, что игрок уже видел, без уведомлений."""
         known = list(persistent.yt_unlocked or [])
         for sid, name, stage, trig in YT_SHOTS:
             if sid in known:
@@ -98,6 +90,13 @@ init 5 python:
     def yt_check_finale():
         yt_sync()
 
+    def yt_save_name(value):
+        value = (value or "").strip()
+        if not value:
+            value = u"MR LIMBO"
+        persistent.yt_name = value[:32]
+        renpy.save_persistent()
+
     def yt_thumb(shot_id):
         return Transform(
             "images/%s.png" % shot_id,
@@ -106,10 +105,6 @@ init 5 python:
             align=(0.5, 0.5)
         )
 
-
-# ==========================================================
-# Уведомление по ходу игры
-# ==========================================================
 
 init 310 python:
 
@@ -121,7 +116,6 @@ init 310 python:
             YT_UNLOCK_AT.setdefault(_trig, []).append(_sid)
 
     def _yt_label_cb(label_name, abnormal):
-
         if _yt_prev_label_cb is not None:
             _yt_prev_label_cb(label_name, abnormal)
 
@@ -164,12 +158,7 @@ screen yt_note(shot=None, extra=0):
             spacing 16
 
             if shot and renpy.loadable("images/%s.png" % shot):
-                add Transform(
-                    "images/%s.png" % shot,
-                    xysize=(168, 94),
-                    fit="cover",
-                    align=(0.5, 0.5)
-                ) yalign 0.5
+                add Transform("images/%s.png" % shot, xysize=(168, 94), fit="cover", align=(0.5, 0.5)) yalign 0.5
 
             vbox:
                 yalign 0.5
@@ -202,80 +191,88 @@ screen yt_screen():
     zorder 140
 
     on "show" action Function(yt_sync)
-
     key "game_menu" action Hide("yt_screen")
 
     default yt_open = yt_open_count()
     default yt_all = yt_total()
+    default yt_edit_name = persistent.yt_name
 
     add Solid("#03060af2")
 
     vbox:
         xpos 108
-        ypos 88
-        spacing 10
+        ypos 72
+        spacing 12
 
         text _("Я ЮТУБЕР"):
-            size 52
+            size 62
             font "kazmann-sans.ttf"
             color "#e8eef5"
             kerning 7
 
         text _("Кадры для превью. Открываются по ходу истории: [yt_open] из [yt_all]."):
-            size 26
+            size 30
             color "#8c9bab"
 
     frame:
         xpos 108
-        ypos 206
-        xsize 1180
-        padding (24, 18, 24, 18)
-        background Solid("#070d15cc")
+        ypos 196
+        xsize 1600
+        padding (30, 24, 30, 24)
+        background Solid("#070d15dd")
 
         hbox:
-            spacing 22
+            spacing 28
+            yalign 0.5
 
-            text _("ПОДПИСЬ"):
-                size 26
+            text _("НИК"):
+                size 30
                 color "#8fbcff"
                 kerning 3
                 yalign 0.5
-                xsize 150
+                xsize 120
 
             input:
-                value FieldInputValue(persistent, "yt_name", default=False)
-                length 24
-                size 30
+                value VariableInputValue("yt_edit_name")
+                length 32
+                size 38
                 color "#ffffff"
+                caret "#8fbcff"
                 yalign 0.5
-                xsize 520
+                xsize 850
+                allow "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-"
 
-            text _("кликни и пиши"):
-                size 22
+            textbutton _("СОХРАНИТЬ"):
+                action Function(yt_save_name, yt_edit_name)
+                yalign 0.5
+                text_size 28
+                text_color "#8fbcff"
+                text_hover_color "#ffffff"
+
+            text _("кликни по полю и печатай"):
+                size 24
                 color "#5c7a99"
                 yalign 0.5
 
     viewport:
         xpos 108
-        ypos 318
+        ypos 330
         xsize 1700
-        ysize (540 if not renpy.variant("small") else 500)
+        ysize (560 if not renpy.variant("small") else 470)
         draggable True
         mousewheel True
         scrollbars "vertical"
 
         vpgrid:
-            cols (5 if not renpy.variant("small") else 4)
-            spacing 20
+            cols (4 if not renpy.variant("small") else 3)
+            spacing 26
             xfill False
 
             for sid, sname, stage, strig in YT_SHOTS:
-
                 vbox:
-                    spacing 8
+                    spacing 10
 
                     if yt_is_open(sid):
-
                         button:
                             xysize (YT_THUMB_W, YT_THUMB_H)
                             background yt_thumb(sid)
@@ -283,37 +280,30 @@ screen yt_screen():
                             action Show("yt_shot", shot=sid)
 
                         text sname:
-                            size 22
+                            size 25
                             color "#c2cfdc"
                             xsize YT_THUMB_W
-
                     else:
-
                         fixed:
                             xysize (YT_THUMB_W, YT_THUMB_H)
                             add Solid("#0a121cf2")
                             add dlc_frame(YT_THUMB_W, YT_THUMB_H, "#2b3947", 2)
                             text "?":
                                 align (0.5, 0.5)
-                                size 54
+                                size 60
                                 color "#2f3f4f"
 
                         text _("Закрыто"):
-                            size 22
+                            size 25
                             color "#4a5764"
                             xsize YT_THUMB_W
 
     textbutton _("НАЗАД"):
         style_prefix "dlc_btn"
         xpos 108
-        yalign 0.94
+        yalign 0.96
         action Hide("yt_screen")
 
-
-# ==========================================================
-# Превью во весь экран.
-# Логотип маленький, полосы затемнения тонкие, кадр виден полностью.
-# ==========================================================
 
 screen yt_shot(shot=""):
 
@@ -322,13 +312,7 @@ screen yt_shot(shot=""):
 
     key "game_menu" action Hide("yt_shot")
 
-    add Transform(
-        "images/%s.png" % shot,
-        xysize=(config.screen_width, config.screen_height),
-        fit="cover",
-        align=(0.5, 0.5)
-    )
-
+    add Transform("images/%s.png" % shot, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
     add Transform(Solid("#000000"), ysize=118, yalign=0.0, alpha=0.38)
     add Transform(Solid("#000000"), ysize=150, yalign=1.0, alpha=0.46)
 
