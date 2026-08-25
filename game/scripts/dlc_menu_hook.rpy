@@ -44,84 +44,42 @@ init 100 python:
         pass
 
 
-# ==========================================================
-# Рамка для кнопок: только обводка, без картинок.
-# ==========================================================
-
 init -10 python:
 
     DLC_BTN_W = 620 if renpy.variant("small") else 560
     DLC_BTN_H = 84 if renpy.variant("small") else 68
 
     def dlc_frame(w, h, line, thickness=2, fill=None):
-        """Прямоугольная обводка из четырёх тонких полос."""
         parts = []
-
         if fill:
             parts.append(Transform(Solid(fill), xysize=(w, h)))
-
         parts.append(Transform(Solid(line), xysize=(w, thickness), align=(0.0, 0.0)))
         parts.append(Transform(Solid(line), xysize=(w, thickness), align=(0.0, 1.0)))
         parts.append(Transform(Solid(line), xysize=(thickness, h), align=(0.0, 0.0)))
         parts.append(Transform(Solid(line), xysize=(thickness, h), align=(1.0, 0.0)))
-
         return Fixed(*parts, xysize=(w, h))
 
-
-# ==========================================================
-# Снег для меню: мягкие размытые хлопья, падают быстро.
-# ==========================================================
 
 init 185 python:
 
     dlc_snow_ok = False
 
     def _dlc_flake(size, alpha, blur_r):
-        """Круглое размытое пятно вместо геометричной звёздочки."""
         try:
-            return Transform(
-                Solid("#ffffff"),
-                xysize=(size, size),
-                blur=blur_r,
-                alpha=alpha
-            )
+            return Transform(Solid("#ffffff"), xysize=(size, size), blur=blur_r, alpha=alpha)
         except Exception:
             return Transform(Solid("#ffffff"), xysize=(size, size), alpha=alpha)
 
     try:
         _small = renpy.variant("small")
         _cnt = 34 if _small else 58
-
-        _dlc_snow_far = SnowBlossom(
-            _dlc_flake(7, 0.40, 3),
-            count=_cnt,
-            border=110,
-            xspeed=(-70, 70),
-            yspeed=(240, 400),
-            start=2,
-            fast=True
-        )
-
-        _dlc_snow_near = SnowBlossom(
-            _dlc_flake(13, 0.34, 6),
-            count=int(_cnt * 0.4),
-            border=140,
-            xspeed=(-120, 120),
-            yspeed=(430, 660),
-            start=2,
-            fast=True
-        )
-
+        _dlc_snow_far = SnowBlossom(_dlc_flake(7, 0.40, 3), count=_cnt, border=110, xspeed=(-70, 70), yspeed=(240, 400), start=2, fast=True)
+        _dlc_snow_near = SnowBlossom(_dlc_flake(13, 0.34, 6), count=int(_cnt * 0.4), border=140, xspeed=(-120, 120), yspeed=(430, 660), start=2, fast=True)
         renpy.image("dlc_snow_layer", Fixed(_dlc_snow_far, _dlc_snow_near))
         dlc_snow_ok = True
-
     except Exception:
         dlc_snow_ok = False
 
-
-# ==========================================================
-# Фон меню DLC и логотип
-# ==========================================================
 
 init 190 python:
 
@@ -135,42 +93,20 @@ init 190 python:
     else:
         _dlc_menu_layer = Solid("#0a0e14")
 
-    renpy.image(
-        "dlc_menu_bg",
-        Transform(
-            _dlc_menu_layer,
-            xysize=(config.screen_width, config.screen_height),
-            fit="cover",
-            align=(0.5, 0.5)
-        )
-    )
+    renpy.image("dlc_menu_bg", Transform(_dlc_menu_layer, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5)))
 
     _dlc_logo = None
-    for _cand in (
-        "images/logo.png",
-        "images/logo_ice2.png",
-        "images/logo_ice.png",
-        "images/logo_w.png",
-    ):
+    for _cand in ("images/logo.png", "images/logo_ice2.png", "images/logo_ice.png", "images/logo_w.png"):
         if renpy.loadable(_cand):
             _dlc_logo = _cand
             break
 
-    # ---------- звук меню: без музыки, только зимний ветер ----------
-
     def dlc_menu_audio_on():
         renpy.music.stop(channel="music", fadeout=0.8)
         if renpy.loadable("audio/winter.mp3"):
-            renpy.music.play(
-                "audio/winter.mp3",
-                channel="ambient",
-                loop=True,
-                fadein=1.5,
-                relative_volume=0.55
-            )
+            renpy.music.play("audio/winter.mp3", channel="ambient", loop=True, fadein=1.5, relative_volume=0.55)
 
     def dlc_menu_keep_quiet():
-        """Движок сам возвращает музыку главного меню, поэтому глушим её повторно."""
         try:
             if renpy.music.get_playing(channel="music"):
                 renpy.music.stop(channel="music", fadeout=0.4)
@@ -182,20 +118,9 @@ init 190 python:
 
     def dlc_menu_audio_off():
         renpy.music.stop(channel="ambient", fadeout=1.0)
-        # Музыку главного меню возвращаем только если остались в меню.
-        if getattr(renpy.store, "main_menu", False):
-            if renpy.loadable("audio/menu.mp3"):
-                renpy.music.play(
-                    "audio/menu.mp3",
-                    channel="music",
-                    loop=True,
-                    fadein=1.5
-                )
+        if getattr(renpy.store, "main_menu", False) and renpy.loadable("audio/menu.mp3"):
+            renpy.music.play("audio/menu.mp3", channel="music", loop=True, fadein=1.5)
 
-
-# ==========================================================
-# Стили кнопок: обводка, все состояния заданы явно.
-# ==========================================================
 
 style dlc_btn is button
 style dlc_btn_text is button_text
@@ -225,7 +150,6 @@ style dlc_btn_text:
     insensitive_color "#4a5764"
     outlines []
 
-
 transform dlc_slide(delay=0.0):
     alpha 0.0 xoffset -70
     pause delay
@@ -234,30 +158,17 @@ transform dlc_slide(delay=0.0):
     parallel:
         linear 0.35 alpha 1.0
 
-
-# ==========================================================
-# Меню DLC
-# ==========================================================
-
 screen dlc_select_screen():
-
     tag menu
     modal True
-
     on "show" action [Function(dlc_menu_audio_on), Function(yt_check_finale)]
     on "hide" action Function(dlc_menu_audio_off)
-
-    # Движок любит сам поднимать музыку главного меню: держим тишину.
     timer 0.5 repeat True action Function(dlc_menu_keep_quiet)
-
     key "game_menu" action Return()
-
     add "dlc_menu_bg"
-
     if dlc_snow_ok:
         add "dlc_snow_layer"
 
-    # Логотип
     if _dlc_logo:
         add _dlc_logo:
             xpos 104
@@ -273,7 +184,6 @@ screen dlc_select_screen():
             color "#e8eef5"
             kerning 5.0
             at dlc_slide(0.05)
-
         text "H E R I T A G E":
             xpos 112
             ypos 238
@@ -283,32 +193,26 @@ screen dlc_select_screen():
             kerning 8.0
             at dlc_slide(0.12)
 
-    # Кнопки
     vbox:
         xpos 108
         ypos (430 if renpy.variant("small") else 480)
         spacing 14
-
         textbutton _("НОВАЯ ИГРА"):
             style_prefix "dlc_btn"
             action [Function(dlc_menu_wind_off), Start("dlc_sosnovka_start")]
             at dlc_slide(0.20)
-
         textbutton _("ПРОДОЛЖИТЬ"):
             style_prefix "dlc_btn"
             action ShowMenu("load")
             at dlc_slide(0.28)
-
         textbutton _("Я ЮТУБЕР"):
             style_prefix "dlc_btn"
             action Show("yt_screen")
             at dlc_slide(0.36)
-
         textbutton _("НАСТРОЙКИ"):
             style_prefix "dlc_btn"
             action Show("dlc_prefs")
             at dlc_slide(0.44)
-
         textbutton _("НАЗАД"):
             style_prefix "dlc_btn"
             action Return()
@@ -323,35 +227,22 @@ screen dlc_select_screen():
         font "kazmann-sans.ttf"
         color "#5c7a9977"
 
-
-# ==========================================================
-# Настройки поверх меню DLC.
-# Отдельный экран без tag menu, поэтому меню под ним не пропадает,
-# а «Назад» возвращает именно в меню DLC, а не в главное.
-# ==========================================================
-
 screen dlc_prefs():
-
     modal True
     zorder 130
-
     key "game_menu" action Hide("dlc_prefs")
-
     add Solid("#03060ad9")
-
     vbox:
         xalign 0.5
         yalign 0.5
         spacing 22
         xsize 1180
-
         text _("НАСТРОЙКИ"):
             xalign 0.5
             size 44
             font "kazmann-sans.ttf"
             color "#e8eef5"
             kerning 6
-
         if renpy.variant("pc") or renpy.variant("web"):
             frame:
                 style "pref_card"
@@ -366,74 +257,49 @@ screen dlc_prefs():
                         textbutton _("Полный экран"):
                             action Preference("display", "fullscreen")
                             style "radio_button"
-
         frame:
             style "pref_card"
             vbox:
                 spacing 10
                 text _("ТЕКСТ") style "pref_head"
-
                 hbox:
                     spacing 24
                     text _("Скорость текста") style "pref_item" xsize 360
                     bar value Preference("text speed") xsize 620 yalign 0.5
-
                 hbox:
                     spacing 24
                     text _("Задержка авто-режима") style "pref_item" xsize 360
                     bar value Preference("auto-forward time") xsize 620 yalign 0.5
-
         frame:
             style "pref_card"
             vbox:
                 spacing 10
                 text _("ЗВУК") style "pref_head"
-
                 hbox:
                     spacing 24
                     text _("Музыка") style "pref_item" xsize 360
                     bar value Preference("music volume") xsize 620 yalign 0.5
-
                 hbox:
                     spacing 24
                     text _("Звуки") style "pref_item" xsize 360
                     bar value Preference("sound volume") xsize 620 yalign 0.5
-
                 textbutton _("Выключить весь звук"):
                     action Preference("all mute", "toggle")
                     style "check_button"
-
         null height 8
-
         textbutton _("НАЗАД"):
             style_prefix "dlc_btn"
             xalign 0.5
             action Hide("dlc_prefs")
 
-
-# ==========================================================
-# Плашка 16+ убрана: экран сразу закрывается сам.
-# Вызовы call age_gate в сюжете трогать не надо.
-# ==========================================================
-
 init 300:
-
     screen age_gate():
         timer 0.01 action Return(True)
 
-
-# ==========================================================
-# Главное меню с кнопкой DLC и выходом на всех платформах
-# ==========================================================
-
 init 200:
-
     screen main_menu():
-
         tag menu
-
         add gui.main_menu_background
-
         text "Девяностые":
             xalign 0.5
             yalign 0.34
@@ -442,24 +308,17 @@ init 200:
             color "#ffffff"
             kerning 4.0
             outlines [(3, "#00b3ff88", 0, 0)]
-
         vbox:
             style_prefix "main_nav"
             xalign 0.5
             yalign 0.68
             spacing 8
-
             textbutton _("Начать новую игру") action Start()
             textbutton _("DLC") action ShowMenu("dlc_select_screen")
             textbutton _("Продолжить") action ShowMenu("load")
             textbutton _("Настройки") action ShowMenu("preferences")
             textbutton _("Об игре") action ShowMenu("about")
-
-            if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
-                textbutton _("Помощь") action ShowMenu("help")
-
             textbutton _("Выход") action Quit(confirm=True)
-
         text "MR LIMBO":
             xalign 1.0
             yalign 1.0
