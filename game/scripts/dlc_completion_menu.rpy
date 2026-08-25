@@ -8,17 +8,15 @@ init 191 python:
     DLC_COMPLETE_STILL = "images/dlc_menu_complete.png"
 
     def dlc_refresh_menu_background():
-        try:
-            completed = bool(getattr(persistent, "completed", False))
-        except Exception:
-            completed = False
+        # Общий persistent.completed основной игры здесь не используется.
+        completed = bool(getattr(persistent, "dlc_completed", False))
 
         if completed and renpy.loadable(DLC_COMPLETE_VIDEO):
-            source = Movie(play=DLC_COMPLETE_VIDEO, loop=True, channel="movie")
+            source = Movie(play=DLC_COMPLETE_VIDEO, loop=True)
         elif completed and renpy.loadable(DLC_COMPLETE_STILL):
             source = DLC_COMPLETE_STILL
         elif renpy.loadable(DLC_BASE_VIDEO):
-            source = Movie(play=DLC_BASE_VIDEO, loop=True, channel="movie")
+            source = Movie(play=DLC_BASE_VIDEO, loop=True)
         elif renpy.loadable("images/dlc_menu.png"):
             source = "images/dlc_menu.png"
         else:
@@ -26,23 +24,17 @@ init 191 python:
 
         renpy.image(
             "dlc_menu_bg",
-            Transform(
-                source,
-                xysize=(config.screen_width, config.screen_height),
-                fit="cover",
-                align=(0.5, 0.5)
-            )
+            Transform(source, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
         )
 
     dlc_refresh_menu_background()
 
     def dlc_mark_completed():
-        persistent.completed = True
+        persistent.dlc_completed = True
         renpy.save_persistent()
         dlc_refresh_menu_background()
         renpy.music.stop(channel="music", fadeout=0.5)
         renpy.music.stop(channel="ambient", fadeout=0.5)
-        renpy.music.stop(channel="movie", fadeout=0.5)
 
 
 label dlc_completed_menu:
