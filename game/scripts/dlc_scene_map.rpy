@@ -1,23 +1,23 @@
 # ==========================================================
 # game/scripts/dlc_scene_map.rpy
 # DLC «Сосновка» — единая карта кадров.
-# Все кадры лежат в game/images/ как sc_*.png
 # ==========================================================
 
 init python:
 
-    # Низкие: кадр сначала пересчитывается в уменьшенное разрешение.
-    # Затем выводится на экран с сохранением пропорций, без fit="fill".
-    _dlc_low_size = (960, 540)
+    _dlc_low_size = (640, 360)
     _dlc_screen_size = (config.screen_width, config.screen_height)
 
     def _dlc_scene_displayable(path):
-        low = Transform(path, xysize=_dlc_low_size, fit="cover", align=(0.5, 0.5))
+        # im.Scale создаёт отдельную уменьшенную текстуру, а не просто
+        # меняет размер вывода. Поэтому на низких качество действительно ниже.
+        low_image = im.Scale(path, _dlc_low_size[0], _dlc_low_size[1])
+        low = Transform(low_image, xysize=_dlc_screen_size, fit="cover", align=(0.5, 0.5))
         normal = Transform(path, xysize=_dlc_screen_size, fit="cover", align=(0.5, 0.5))
 
         return ConditionSwitch(
             "getattr(persistent, 'dlc_graphics_quality', 'medium') == 'low'",
-            Transform(low, xysize=_dlc_screen_size, fit="cover", align=(0.5, 0.5)),
+            low,
             "True",
             normal
         )
