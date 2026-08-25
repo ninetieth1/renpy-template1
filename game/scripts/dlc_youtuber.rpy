@@ -173,7 +173,9 @@ screen yt_screen():
                 yalign 0.5
                 xsize 130
             input:
-                value VariableInputValue("yt_edit_name")
+                # Здесь переменная локальная для экрана, поэтому нужен
+                # ScreenVariableInputValue, а не VariableInputValue.
+                value ScreenVariableInputValue("yt_edit_name")
                 length 32
                 size 46
                 color "#ffffff"
