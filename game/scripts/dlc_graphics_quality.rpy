@@ -4,6 +4,7 @@
 # ==========================================================
 
 default persistent.dlc_graphics_quality = "medium"
+default persistent.dlc_completed = False
 
 init 192 python:
 
@@ -20,19 +21,19 @@ init 192 python:
         if value not in ("low", "medium", "high"):
             value = "medium"
         persistent.dlc_graphics_quality = value
-        # Старый кодовый снег работает только в среднем режиме.
-        store.dlc_snow_ok = (value == "medium")
         renpy.save_persistent()
         renpy.restart_interaction()
 
     def dlc_high_snow_available():
         return renpy.loadable(DLC_HIGH_SNOW_VIDEO)
 
-    # Восстанавливаем режим после запуска игры.
-    store.dlc_snow_ok = (getattr(persistent, "dlc_graphics_quality", "medium") == "medium")
+    def dlc_is_completed():
+        # Не используем общий persistent.completed: он мог быть выставлен
+        # основной игрой или старым сохранением.
+        return bool(getattr(persistent, "dlc_completed", False))
 
 screen dlc_quality_overlay():
-    # Панель появляется поверх окна настроек DLC.
+    # Настройки графики показываются только внутри настроек DLC.
     if renpy.get_screen("dlc_prefs"):
         frame:
             xpos 420
@@ -48,22 +49,21 @@ screen dlc_quality_overlay():
                 text _("ГРАФИКА"):
                     size 30
                     color "#8fbcff"
-                    kerning 3
                     yalign 0.5
 
                 textbutton _("Низкие"):
                     action Function(dlc_set_quality, "low")
-                    selected (persistent.dlc_graphics_quality == "low")
+                    selected (getattr(persistent, "dlc_graphics_quality", "medium") == "low")
                     text_size 28
 
                 textbutton _("Средние"):
                     action Function(dlc_set_quality, "medium")
-                    selected (persistent.dlc_graphics_quality == "medium")
+                    selected (getattr(persistent, "dlc_graphics_quality", "medium") == "medium")
                     text_size 28
 
                 textbutton _("Высокие"):
                     action Function(dlc_set_quality, "high")
-                    selected (persistent.dlc_graphics_quality == "high")
+                    selected (getattr(persistent, "dlc_graphics_quality", "medium") == "high")
                     text_size 28
 
                 text "[dlc_quality_label()]":
@@ -71,9 +71,10 @@ screen dlc_quality_overlay():
                     color "#c2cfdc"
                     yalign 0.5
 
-    # В высоком режиме старый снег выключен, а оверлей включён только если ролик есть.
+    # В высоком режиме старый кодовый снег не показываем.
+    # Видео запускается только на экране меню DLC.
     if renpy.get_screen("dlc_select_screen") and getattr(persistent, "dlc_graphics_quality", "medium") == "high" and dlc_high_snow_available():
-        add Movie(play=DLC_HIGH_SNOW_VIDEO, loop=True, channel="movie")
+        add Movie(play=DLC_HIGH_SNOW_VIDEO, loop=True)
 
 init 193 python:
     if "dlc_quality_overlay" not in config.overlay_screens:
