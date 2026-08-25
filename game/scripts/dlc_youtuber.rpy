@@ -66,10 +66,12 @@ init 5 python:
     def yt_check_finale():
         yt_sync()
 
-    def yt_save_name(value):
+    def yt_edit_nickname():
+        value = renpy.input(u"Введи ник:", default=persistent.yt_name or u"MR LIMBO", length=32, allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-")
         value = (value or "").strip() or u"MR LIMBO"
         persistent.yt_name = value[:32]
         renpy.save_persistent()
+        renpy.restart_interaction()
 
     def yt_thumb(shot_id):
         return Transform("images/%s.png" % shot_id, xysize=(YT_THUMB_W, YT_THUMB_H), fit="cover", align=(0.5, 0.5))
@@ -140,65 +142,63 @@ screen yt_screen():
     key "game_menu" action Hide("yt_screen")
     default yt_open = yt_open_count()
     default yt_all = yt_total()
-    default yt_edit_name = persistent.yt_name
 
     add Solid("#03060af2")
 
     vbox:
         xpos 108
-        ypos 72
-        spacing 12
+        ypos 58
+        spacing 8
         text _("Я ЮТУБЕР"):
-            size 76
+            size 70
             font "kazmann-sans.ttf"
             color "#e8eef5"
             kerning 7
         text _("Кадры для превью. Открываются по ходу истории: [yt_open] из [yt_all]."):
-            size 36
+            size 32
             color "#8c9bab"
 
     frame:
         xpos 108
-        ypos 196
+        ypos 190
         xsize 1600
-        padding (30, 24, 30, 24)
+        padding (28, 20, 28, 20)
         background Solid("#070d15dd")
         hbox:
-            spacing 28
+            spacing 24
             yalign 0.5
             text _("НИК"):
-                size 36
+                size 34
                 color "#8fbcff"
-                kerning 3
                 yalign 0.5
-                xsize 130
-            input:
-                # Здесь переменная локальная для экрана, поэтому нужен
-                # ScreenVariableInputValue, а не VariableInputValue.
-                value ScreenVariableInputValue("yt_edit_name")
-                length 32
-                size 46
-                color "#ffffff"
-                caret "#8fbcff"
+                xsize 120
+            textbutton "[persistent.yt_name!q]":
+                xsize 720
+                ysize 58
                 yalign 0.5
-                xsize 850
-                allow "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-"
-            textbutton _("СОХРАНИТЬ"):
-                action Function(yt_save_name, yt_edit_name)
+                text_size 40
+                text_xalign 0.0
+                text_color "#ffffff"
+                text_hover_color "#8fbcff"
+                background Solid("#16263b")
+                hover_background Solid("#203b5c")
+                action Function(yt_edit_nickname)
+            textbutton _("ИЗМЕНИТЬ"):
                 yalign 0.5
-                text_size 34
+                text_size 32
                 text_color "#8fbcff"
                 text_hover_color "#ffffff"
-            text _("кликни по полю и печатай"):
-                size 28
+                action Function(yt_edit_nickname)
+            text _("нажми на ник"):
+                size 26
                 color "#5c7a99"
                 yalign 0.5
 
     viewport:
         xpos 108
-        ypos 330
+        ypos 318
         xsize 1700
-        ysize (560 if not renpy.variant("small") else 470)
+        ysize (575 if not renpy.variant("small") else 470)
         draggable True
         mousewheel True
         scrollbars "vertical"

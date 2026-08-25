@@ -1,10 +1,8 @@
 # ==========================================================
-# game/scripts/dlc_menu_hook.rpy
 # Меню DLC «Девяностые: Heritage» + коды глав.
 # ==========================================================
 
 init 100 python:
-
     try:
         STORY_CODES.update({
             "2010": ("dlc_ch_urok", u"DLC. Сцена 1. Класс после каникул"),
@@ -43,12 +41,9 @@ init 100 python:
     except Exception:
         pass
 
-
 init -10 python:
-
     DLC_BTN_W = 620 if renpy.variant("small") else 560
     DLC_BTN_H = 84 if renpy.variant("small") else 68
-
     def dlc_frame(w, h, line, thickness=2, fill=None):
         parts = []
         if fill:
@@ -59,17 +54,13 @@ init -10 python:
         parts.append(Transform(Solid(line), xysize=(thickness, h), align=(1.0, 0.0)))
         return Fixed(*parts, xysize=(w, h))
 
-
 init 185 python:
-
     dlc_snow_ok = False
-
     def _dlc_flake(size, alpha, blur_r):
         try:
             return Transform(Solid("#ffffff"), xysize=(size, size), blur=blur_r, alpha=alpha)
         except Exception:
             return Transform(Solid("#ffffff"), xysize=(size, size), alpha=alpha)
-
     try:
         _small = renpy.variant("small")
         _cnt = 34 if _small else 58
@@ -80,51 +71,40 @@ init 185 python:
     except Exception:
         dlc_snow_ok = False
 
-
 init 190 python:
-
     _dlc_menu_video = "video/dlc_menu.webm"
     _dlc_menu_still = "images/dlc_menu.png"
-
     if renpy.loadable(_dlc_menu_video):
         _dlc_menu_layer = Movie(play=_dlc_menu_video, loop=True)
     elif renpy.loadable(_dlc_menu_still):
         _dlc_menu_layer = _dlc_menu_still
     else:
         _dlc_menu_layer = Solid("#0a0e14")
-
     renpy.image("dlc_menu_bg", Transform(_dlc_menu_layer, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5)))
-
     _dlc_logo = None
     for _cand in ("images/logo.png", "images/logo_ice2.png", "images/logo_ice.png", "images/logo_w.png"):
         if renpy.loadable(_cand):
             _dlc_logo = _cand
             break
-
     def dlc_menu_audio_on():
         renpy.music.stop(channel="music", fadeout=0.8)
         if renpy.loadable("audio/winter.mp3"):
             renpy.music.play("audio/winter.mp3", channel="ambient", loop=True, fadein=1.5, relative_volume=0.55)
-
     def dlc_menu_keep_quiet():
         try:
             if renpy.music.get_playing(channel="music"):
                 renpy.music.stop(channel="music", fadeout=0.4)
         except Exception:
             pass
-
     def dlc_menu_wind_off():
         renpy.music.stop(channel="ambient", fadeout=0.6)
-
     def dlc_menu_audio_off():
         renpy.music.stop(channel="ambient", fadeout=1.0)
         if getattr(renpy.store, "main_menu", False) and renpy.loadable("audio/menu.mp3"):
             renpy.music.play("audio/menu.mp3", channel="music", loop=True, fadein=1.5)
 
-
 style dlc_btn is button
 style dlc_btn_text is button_text
-
 style dlc_btn:
     xysize (DLC_BTN_W, DLC_BTN_H)
     padding (30, 0, 22, 0)
@@ -135,7 +115,6 @@ style dlc_btn:
     insensitive_background dlc_frame(DLC_BTN_W, DLC_BTN_H, "#48566433", 2, "#05090f40")
     hover_xoffset 12
     selected_xoffset 12
-
 style dlc_btn_text:
     font "kazmann-sans.ttf"
     size (36 if renpy.variant("small") else 30)
@@ -149,7 +128,6 @@ style dlc_btn_text:
     selected_hover_color "#ffffff"
     insensitive_color "#4a5764"
     outlines []
-
 transform dlc_slide(delay=0.0):
     alpha 0.0 xoffset -70
     pause delay
@@ -168,7 +146,6 @@ screen dlc_select_screen():
     add "dlc_menu_bg"
     if dlc_snow_ok:
         add "dlc_snow_layer"
-
     if _dlc_logo:
         add _dlc_logo:
             xpos 104
@@ -192,7 +169,6 @@ screen dlc_select_screen():
             color "#8fbcff"
             kerning 8.0
             at dlc_slide(0.12)
-
     vbox:
         xpos 108
         ypos (430 if renpy.variant("small") else 480)
@@ -217,7 +193,6 @@ screen dlc_select_screen():
             style_prefix "dlc_btn"
             action Return()
             at dlc_slide(0.52)
-
     text "MR LIMBO":
         xalign 1.0
         yalign 1.0
@@ -235,14 +210,37 @@ screen dlc_prefs():
     vbox:
         xalign 0.5
         yalign 0.5
-        spacing 22
-        xsize 1180
+        spacing 18
+        xsize 1320
         text _("НАСТРОЙКИ"):
             xalign 0.5
-            size 44
+            size 50
             font "kazmann-sans.ttf"
             color "#e8eef5"
             kerning 6
+        frame:
+            style "pref_card"
+            xfill True
+            padding (22, 18, 22, 18)
+            vbox:
+                spacing 10
+                text _("ГРАФИКА"):
+                    size 34
+                    color "#8fbcff"
+                hbox:
+                    spacing 28
+                    textbutton _("Низкие"):
+                        action Function(dlc_set_quality, "low")
+                        selected (getattr(persistent, "dlc_graphics_quality", "medium") == "low")
+                        text_size 30
+                    textbutton _("Средние"):
+                        action Function(dlc_set_quality, "medium")
+                        selected (getattr(persistent, "dlc_graphics_quality", "medium") == "medium")
+                        text_size 30
+                    textbutton _("Высокие"):
+                        action Function(dlc_set_quality, "high")
+                        selected (getattr(persistent, "dlc_graphics_quality", "medium") == "high")
+                        text_size 30
         if renpy.variant("pc") or renpy.variant("web"):
             frame:
                 style "pref_card"
