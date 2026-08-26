@@ -1,5 +1,9 @@
-# Финальный фон меню DLC после прохождения.
-# Файл видео: game/video/dlc_menu_complete.webm
+# ==========================================================
+# Финальный фон и титры DLC «Девяностые: Heritage».
+# Музыка титров: game/audio/credits.mp3
+# ==========================================================
+
+default persistent.dlc_completed = False
 
 init 191 python:
 
@@ -8,7 +12,6 @@ init 191 python:
     DLC_COMPLETE_STILL = "images/dlc_menu_complete.png"
 
     def dlc_refresh_menu_background():
-        # Общий persistent.completed основной игры здесь не используется.
         completed = bool(getattr(persistent, "dlc_completed", False))
 
         if completed and renpy.loadable(DLC_COMPLETE_VIDEO):
@@ -36,8 +39,96 @@ init 191 python:
         renpy.music.stop(channel="music", fadeout=0.5)
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
+    def dlc_credits_tick():
+        # Титры нельзя пропустить: экран закроется только после окончания музыки.
+        if renpy.music.get_playing(channel="music") is None:
+            renpy.end_interaction(True)
 
-label dlc_completed_menu:
+
+label dlc_credits:
     $ dlc_mark_completed()
+    $ renpy.music.play("audio/credits.mp3", channel="music", loop=False, fadein=1.5)
+    call screen dlc_credits_screen
+    $ renpy.music.stop(channel="music", fadeout=0.8)
     call screen dlc_select_screen
     return
+
+
+screen dlc_credits_screen():
+    modal True
+    zorder 300
+
+    add Solid("#05070b")
+
+    viewport:
+        xalign 0.5
+        ypos 1080
+        xsize 1500
+        ysize 980
+        draggable False
+        mousewheel False
+        scrollbars None
+
+        vbox:
+            xalign 0.5
+            spacing 34
+            at dlc_credits_roll
+
+            text "ДЕВЯНОСТЫЕ: HERITAGE":
+                xalign 0.5
+                size 64
+                color "#e8eef5"
+                font "kazmann-sans.ttf"
+                kerning 6
+
+            null height 80
+
+            text "ФИНАЛЬНЫЕ ТИТРЫ":
+                xalign 0.5
+                size 38
+                color "#8fbcff"
+                font "kazmann-sans.ttf"
+                kerning 5
+
+            null height 70
+
+            text "История и сценарий":
+                xalign 0.5
+                size 34
+                color "#c2cfdc"
+            text "MR LIMBO":
+                xalign 0.5
+                size 42
+                color "#ffffff"
+
+            null height 40
+
+            text "Артём и Катя":
+                xalign 0.5
+                size 34
+                color "#c2cfdc"
+            text "Спасибо, что дошёл до конца.":
+                xalign 0.5
+                size 34
+                color "#ffffff"
+
+            null height 100
+
+            text "Никто не должен быть забыт.":
+                xalign 0.5
+                size 40
+                color "#8fbcff"
+                font "kazmann-sans.ttf"
+
+            null height 180
+
+            text "Конец DLC":
+                xalign 0.5
+                size 30
+                color "#5c7a99"
+
+    timer 0.5 repeat True action Function(dlc_credits_tick)
+
+transform dlc_credits_roll:
+    yoffset 980
+    linear 78.0 yoffset -900
