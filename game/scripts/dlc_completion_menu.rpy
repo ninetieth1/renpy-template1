@@ -11,36 +11,35 @@ init 191 python:
     DLC_BASE_VIDEO = "video/dlc_menu.webm"
     DLC_COMPLETE_STILL = "images/dlc_menu_complete.png"
 
-    def dlc_refresh_menu_background():
-        completed = bool(getattr(persistent, "dlc_completed", False))
-
+    def _dlc_menu_source(completed):
         if completed and renpy.loadable(DLC_COMPLETE_VIDEO):
-            source = Movie(play=DLC_COMPLETE_VIDEO, loop=True)
-        elif completed and renpy.loadable(DLC_COMPLETE_STILL):
-            source = DLC_COMPLETE_STILL
-        elif renpy.loadable(DLC_BASE_VIDEO):
-            source = Movie(play=DLC_BASE_VIDEO, loop=True)
-        elif renpy.loadable("images/dlc_menu.png"):
-            source = "images/dlc_menu.png"
-        else:
-            source = Solid("#0a0e14")
+            return Movie(play=DLC_COMPLETE_VIDEO, loop=True)
+        if completed and renpy.loadable(DLC_COMPLETE_STILL):
+            return DLC_COMPLETE_STILL
+        if renpy.loadable(DLC_BASE_VIDEO):
+            return Movie(play=DLC_BASE_VIDEO, loop=True)
+        if renpy.loadable("images/dlc_menu.png"):
+            return "images/dlc_menu.png"
+        return Solid("#0a0e14")
 
-        renpy.image(
-            "dlc_menu_bg",
-            Transform(source, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
+    # Объявляем картинку только один раз во время init.
+    renpy.image(
+        "dlc_menu_bg",
+        ConditionSwitch(
+            "getattr(persistent, 'dlc_completed', False)",
+            Transform(_dlc_menu_source(True), xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5)),
+            "True",
+            Transform(_dlc_menu_source(False), xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
         )
-
-    dlc_refresh_menu_background()
+    )
 
     def dlc_mark_completed():
         persistent.dlc_completed = True
         renpy.save_persistent()
-        dlc_refresh_menu_background()
         renpy.music.stop(channel="music", fadeout=0.5)
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
     def dlc_credits_tick():
-        # Титры нельзя пропустить: экран закроется только после окончания музыки.
         if renpy.music.get_playing(channel="music") is None:
             renpy.end_interaction(True)
 
@@ -57,9 +56,7 @@ label dlc_credits:
 screen dlc_credits_screen():
     modal True
     zorder 300
-
     add Solid("#05070b")
-
     viewport:
         xalign 0.5
         ypos 1080
@@ -68,30 +65,24 @@ screen dlc_credits_screen():
         draggable False
         mousewheel False
         scrollbars None
-
         vbox:
             xalign 0.5
             spacing 34
             at dlc_credits_roll
-
             text "ДЕВЯНОСТЫЕ: HERITAGE":
                 xalign 0.5
                 size 64
                 color "#e8eef5"
                 font "kazmann-sans.ttf"
                 kerning 6
-
             null height 80
-
             text "ФИНАЛЬНЫЕ ТИТРЫ":
                 xalign 0.5
                 size 38
                 color "#8fbcff"
                 font "kazmann-sans.ttf"
                 kerning 5
-
             null height 70
-
             text "История и сценарий":
                 xalign 0.5
                 size 34
@@ -100,9 +91,7 @@ screen dlc_credits_screen():
                 xalign 0.5
                 size 42
                 color "#ffffff"
-
             null height 40
-
             text "Артём и Катя":
                 xalign 0.5
                 size 34
@@ -111,22 +100,17 @@ screen dlc_credits_screen():
                 xalign 0.5
                 size 34
                 color "#ffffff"
-
             null height 100
-
             text "Никто не должен быть забыт.":
                 xalign 0.5
                 size 40
                 color "#8fbcff"
                 font "kazmann-sans.ttf"
-
             null height 180
-
             text "Конец DLC":
                 xalign 0.5
                 size 30
                 color "#5c7a99"
-
     timer 0.5 repeat True action Function(dlc_credits_tick)
 
 transform dlc_credits_roll:
