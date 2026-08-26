@@ -1185,4 +1185,5 @@ label dlc_ch_stena:
     "«Артём»."
 
     $ persistent.completed = True
-    return
+    scene black with Dissolve(1.5)
+    jump dlc_credits
