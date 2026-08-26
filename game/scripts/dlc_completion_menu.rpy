@@ -34,7 +34,6 @@ init 191 python:
     def dlc_mark_completed():
         persistent.dlc_completed = True
         renpy.save_persistent()
-        renpy.music.stop(channel="music", fadeout=0.5)
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
     def dlc_credits_tick():
@@ -59,9 +58,10 @@ screen dlc_credits_screen():
         xfill True
         yfill True
 
+        # Начинаем прямо за нижним краем экрана, а не на двойной высоте.
         vbox:
             xalign 0.5
-            ypos 980
+            ypos 0
             xsize 1500
             spacing 34
             at dlc_credits_roll
@@ -122,5 +122,5 @@ screen dlc_credits_screen():
     timer 0.5 repeat True action Function(dlc_credits_tick)
 
 transform dlc_credits_roll:
-    yoffset 980
+    yoffset 1080
     linear 78.0 yoffset -1200
