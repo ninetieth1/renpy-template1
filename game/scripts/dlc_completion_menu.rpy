@@ -36,9 +36,6 @@ init 191 python:
         renpy.save_persistent()
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
-    def dlc_credits_finished():
-        return renpy.music.get_playing(channel="music") is None
-
 label dlc_credits:
     $ dlc_mark_completed()
     $ renpy.music.play("audio/dlc_credits.mp3", channel="music", loop=False, fadein=1.5)
@@ -57,8 +54,6 @@ screen dlc_credits_screen():
         xfill True
         yfill True
 
-        # Стартуем сверху видимой области: текст виден сразу,
-        # без пустых 15 секунд в начале.
         vbox:
             xalign 0.5
             ypos 0
@@ -130,6 +125,7 @@ screen dlc_credits_screen():
                 xalign 0.5
                 size 58
                 color "#ffffff"
+                font "kazmann-sans.ttf"
             text "роль ученицы школы":
                 xalign 0.5
                 size 40
@@ -143,7 +139,8 @@ screen dlc_credits_screen():
                 color "#8fbcff"
                 font "kazmann-sans.ttf"
 
-    timer 0.2 repeat True action If(dlc_credits_finished(), Return(), NullAction())
+    # Возврат происходит по окончании прокрутки, а не по длине аудиофайла.
+    timer 110.0 action Return()
 
 transform dlc_credits_roll:
     yoffset 0
