@@ -6,7 +6,6 @@
 default persistent.dlc_completed = False
 
 init 191 python:
-
     DLC_COMPLETE_VIDEO = "video/dlc_menu_complete.webm"
     DLC_BASE_VIDEO = "video/dlc_menu.webm"
     DLC_COMPLETE_STILL = "images/dlc_menu_complete.png"
@@ -22,7 +21,6 @@ init 191 python:
             return "images/dlc_menu.png"
         return Solid("#0a0e14")
 
-    # Объявляем картинку только один раз во время init.
     renpy.image(
         "dlc_menu_bg",
         ConditionSwitch(
@@ -43,7 +41,6 @@ init 191 python:
         if renpy.music.get_playing(channel="music") is None:
             renpy.end_interaction(True)
 
-
 label dlc_credits:
     $ dlc_mark_completed()
     $ renpy.music.play("audio/credits.mp3", channel="music", loop=False, fadein=1.5)
@@ -51,7 +48,6 @@ label dlc_credits:
     $ renpy.music.stop(channel="music", fadeout=0.8)
     call screen dlc_select_screen
     return
-
 
 screen dlc_credits_screen():
     modal True
