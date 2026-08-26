@@ -36,9 +36,8 @@ init 191 python:
         renpy.save_persistent()
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
-    def dlc_credits_tick():
-        if renpy.music.get_playing(channel="music") is None:
-            renpy.end_interaction(True)
+    def dlc_credits_finished():
+        return renpy.music.get_playing(channel="music") is None
 
 label dlc_credits:
     $ dlc_mark_completed()
@@ -58,9 +57,11 @@ screen dlc_credits_screen():
         xfill True
         yfill True
 
+        # Стартуем сверху видимой области: текст виден сразу,
+        # без пустых 15 секунд в начале.
         vbox:
             xalign 0.5
-            ypos 1080
+            ypos 0
             xsize 1700
             spacing 8
             at dlc_credits_roll
@@ -129,7 +130,6 @@ screen dlc_credits_screen():
                 xalign 0.5
                 size 58
                 color "#ffffff"
-                font "kazmann-sans.ttf"
             text "роль ученицы школы":
                 xalign 0.5
                 size 40
@@ -143,8 +143,8 @@ screen dlc_credits_screen():
                 color "#8fbcff"
                 font "kazmann-sans.ttf"
 
-    timer 0.5 repeat True action Function(dlc_credits_tick)
+    timer 0.2 repeat True action If(dlc_credits_finished(), Return(), NullAction())
 
 transform dlc_credits_roll:
-    yoffset 1080
+    yoffset 0
     linear 110.0 yoffset -6200
