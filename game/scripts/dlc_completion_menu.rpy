@@ -52,75 +52,99 @@ screen dlc_credits_screen():
     modal True
     zorder 300
 
-    add Solid("#05070b")
+    add Solid("#000000")
 
     fixed:
         xfill True
         yfill True
 
-        # Начинаем прямо за нижним краем экрана, а не на двойной высоте.
         vbox:
             xalign 0.5
-            ypos 0
-            xsize 1500
-            spacing 34
+            ypos 1080
+            xsize 1700
+            spacing 8
             at dlc_credits_roll
 
-            text "ДЕВЯНОСТЫЕ: HERITAGE":
-                xalign 0.5
-                size 64
-                color "#e8eef5"
-                font "kazmann-sans.ttf"
-                kerning 6
+            for index, item in enumerate(CREDITS):
+                $ kind, val = item
 
-            null height 80
+                if kind == "gap":
+                    null height val
+                elif kind == "head":
+                    text ("ДЕВЯНОСТЫЕ: HERITAGE" if index == 0 else val):
+                        xalign 0.5
+                        size 78
+                        color "#ffffff"
+                        font "kazmann-sans.ttf"
+                        kerning 6
+                elif kind == "title":
+                    null height 26
+                    text val:
+                        xalign 0.5
+                        size 34
+                        color "#00b3ff"
+                        font "kazmann-sans.ttf"
+                        kerning 5
+                    null height 10
+                elif kind == "name":
+                    text val:
+                        xalign 0.5
+                        size 42
+                        color "#eef3f8"
+                elif kind == "small":
+                    text val:
+                        xalign 0.5
+                        size 26
+                        color "#7f8c99"
+                else:
+                    text val:
+                        xalign 0.5
+                        size 27
+                        color "#a9b6c2"
 
-            text "ФИНАЛЬНЫЕ ТИТРЫ":
+            null height 120
+
+            text "В ГЛАВНЫХ РОЛЯХ":
                 xalign 0.5
-                size 38
-                color "#8fbcff"
+                size 48
+                color "#00b3ff"
                 font "kazmann-sans.ttf"
                 kerning 5
 
-            null height 70
+            null height 28
 
-            text "История и сценарий":
+            text "ЖЕНЯ":
                 xalign 0.5
-                size 34
-                color "#c2cfdc"
-            text "MR LIMBO":
-                xalign 0.5
-                size 42
+                size 58
                 color "#ffffff"
-
-            null height 40
-
-            text "Артём и Катя":
-                xalign 0.5
-                size 34
-                color "#c2cfdc"
-            text "Спасибо, что дошёл до конца.":
-                xalign 0.5
-                size 34
-                color "#ffffff"
-
-            null height 100
-
-            text "Никто не должен быть забыт.":
+                font "kazmann-sans.ttf"
+            text "роль Кати":
                 xalign 0.5
                 size 40
+                color "#eef3f8"
+
+            null height 34
+
+            text "АЛИНА":
+                xalign 0.5
+                size 58
+                color "#ffffff"
+                font "kazmann-sans.ttf"
+            text "роль ученицы школы":
+                xalign 0.5
+                size 40
+                color "#eef3f8"
+
+            null height 150
+
+            text "СПАСИБО ЗА УЧАСТИЕ":
+                xalign 0.5
+                size 52
                 color "#8fbcff"
                 font "kazmann-sans.ttf"
-
-            null height 180
-
-            text "Конец DLC":
-                xalign 0.5
-                size 30
-                color "#5c7a99"
 
     timer 0.5 repeat True action Function(dlc_credits_tick)
 
 transform dlc_credits_roll:
     yoffset 1080
-    linear 78.0 yoffset -1200
+    linear 110.0 yoffset -6200
