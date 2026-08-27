@@ -256,6 +256,7 @@ init -50 python:
         key = preset_name + ("_m" if renpy.variant("small") else "_pc")
         inst = Snowstorm._cache.get(key)
         if inst is None:
-            inst = Snowstorm(preset, seed=zlib.crc32(key) & 0x7fffffff)
+            # Python 3: crc32 принимает только байты, не строку.
+            inst = Snowstorm(preset, seed=zlib.crc32(key.encode("utf-8")) & 0x7fffffff)
             Snowstorm._cache[key] = inst
         return inst
