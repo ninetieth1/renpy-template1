@@ -6,16 +6,28 @@
 
 init python:
 
+    _dlc_low_size = (640, 360)
     _dlc_screen_size = (config.screen_width, config.screen_height)
 
     def _dlc_scene_displayable(path):
-        # Стандартный режим: исходное качество, как было до эксперимента
-        # с низкими/высокими настройками.
-        return Transform(
+        # На «низких» кадр заранее уменьшается до 640x360: im.Scale
+        # создаёт отдельную уменьшенную текстуру, поэтому рендер
+        # действительно проще — экономит память и ускоряет слабые
+        # устройства. Средние/Высокие показывают исходное качество.
+        low_image = im.Scale(path, _dlc_low_size[0], _dlc_low_size[1])
+        low = Transform(low_image, xysize=_dlc_screen_size, fit="cover", align=(0.5, 0.5))
+        normal = Transform(
             path,
             xysize=_dlc_screen_size,
             fit="cover",
             align=(0.5, 0.5)
+        )
+
+        return ConditionSwitch(
+            "getattr(persistent, 'dlc_graphics_quality', 'medium') == 'low'",
+            low,
+            "True",
+            normal
         )
 
     for _dlc_bg in renpy.list_files():
