@@ -18,9 +18,11 @@
 # ВАЖНО: в dlc_graphics_compat.rpy есть заглушка dlc_set_quality
 # (init 192), которая всегда ставит «Средние». Наша версия ниже
 # объявлена на init 250 и перекрывает её.
+#
+# default persistent.dlc_graphics_quality объявлен в
+# dlc_graphics_compat.rpy — здесь повторно не объявляем,
+# чтобы линтер не ругался на дубль.
 # ==========================================================
-
-default persistent.dlc_graphics_quality = "medium"
 
 
 init -20 python:
