@@ -2,47 +2,31 @@
 # game/snow.rpy
 # «Девяностые» (c) MR LIMBO
 #
-# Снег на частицах. Лёгкий, без видео.
+# Снег на улице истории. Сам эффект живёт в snowstorm.rpy
+# (хлопья, глубина, ветер), здесь — привязка к сценам и тумблер.
 # story.rpy править не нужно, файл сам подменяет bg().
 # ==========================================================
 
 default persistent.snow_enabled = True
 
-define SNOW_COUNT_PC = 80
-define SNOW_COUNT_MOBILE = 40
-
 
 init python:
 
-    snow_ok = False
+    snow_ok = (renpy.loadable("images/snow_puff.png")
+               or renpy.loadable("images/snow_crystal.png"))
 
-    try:
-        _n = SNOW_COUNT_MOBILE if renpy.variant("small") else SNOW_COUNT_PC
+    def snow_preset_name():
+        q = getattr(persistent, "dlc_graphics_quality", "medium")
+        return {
+            "low": "street_low",
+            "medium": "street",
+            "high": "street_high",
+        }.get(q, "street")
 
-        _flake_far = Transform(Solid("#ffffff"), xysize=(4, 4), alpha=0.45)
-        _flake_near = Transform(Solid("#ffffff"), xysize=(7, 7), alpha=0.70)
-
-        snow_far = SnowBlossom(_flake_far,
-                               count=_n,
-                               border=60,
-                               xspeed=(-30, 30),
-                               yspeed=(50, 110),
-                               start=2,
-                               fast=True)
-
-        snow_near = SnowBlossom(_flake_near,
-                                count=int(_n * 0.4),
-                                border=80,
-                                xspeed=(-60, 60),
-                                yspeed=(120, 220),
-                                start=2,
-                                fast=True)
-
-        renpy.image("snow_layer", Fixed(snow_far, snow_near))
-        snow_ok = True
-
-    except Exception:
-        snow_ok = False
+    def snow_current_layer():
+        if not persistent.snow_enabled:
+            return None
+        return snowstorm_layer(snow_preset_name())
 
 
 # ===== Уличные сцены =====
@@ -100,8 +84,9 @@ init 10 python:
 
 screen snow_overlay():
     zorder 90
-    if snow_ok and persistent.snow_enabled:
-        add "snow_layer"
+    $ snow_active = snow_current_layer()
+    if snow_active is not None:
+        add snow_active
 init 200:
 
     screen preferences():
