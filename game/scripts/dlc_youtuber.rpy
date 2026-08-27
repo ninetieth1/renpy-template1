@@ -276,7 +276,6 @@ screen yt_screen():
                                 xysize (YT_THUMB_W, 110)
                                 yalign 1.0
                         vbox:
-                            xalign 0.0
                             yalign 1.0
                             xpos 14
                             yoffset -10
