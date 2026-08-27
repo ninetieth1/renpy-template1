@@ -22,8 +22,12 @@ init -50 python:
     import zlib
 
 
-    class _SSFlake(object):
-        """Один хлопок: всё нужное для расчёта позиции за O(1)."""
+    class _SSFlake(python_object):
+        """Один хлопок: всё нужное для расчёта позиции за O(1).
+
+        python_object — базовый класс Ren'Py для классов со __slots__:
+        обычный object с слотами не поддерживает откат (rollback).
+        """
         __slots__ = ("disp", "size", "x0", "y0", "vy", "kwind",
                      "sway_amp", "sway_om", "sway_ph")
 
