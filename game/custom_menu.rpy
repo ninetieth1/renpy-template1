@@ -4,7 +4,10 @@
 image main_menu_bg = Transform(
     Movie(
         play="video/bg_menu_loop.webm",
-        loop=True
+        loop=True,
+        # Свой канал: иначе видео главного меню и видео меню DLC
+        # делят один канал "movie" и подменяют друг друга.
+        channel="mainmenu"
     ),
     xysize=(config.screen_width, config.screen_height),
     fit="cover",
