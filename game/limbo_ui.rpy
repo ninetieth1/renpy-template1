@@ -173,13 +173,31 @@ style choice_button_text:
 # 4. Быстрое меню
 ################################################################
 
+init 90 python:
+
+    # Поверх экранов DLC (меню, галерея, настройки, титры) нижняя панель
+    # не показывается — иначе она «залипает» после прохождения DLC.
+    _DLC_UI_SCREENS = (
+        "dlc_select_screen", "dlc_prefs", "dlc_credits_screen",
+        "yt_screen", "yt_shot",
+    )
+
+    def quick_menu_visible():
+        if not getattr(renpy.store, "quick_menu", True):
+            return False
+        for _name in _DLC_UI_SCREENS:
+            if renpy.get_screen(_name):
+                return False
+        return True
+
+
 init 100:
 
     screen quick_menu():
 
         zorder 100
 
-        if quick_menu:
+        if quick_menu_visible():
 
             hbox:
                 style_prefix "quick"
