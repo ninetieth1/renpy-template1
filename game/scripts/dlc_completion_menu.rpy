@@ -26,30 +26,32 @@ init 191 python:
             if renpy.loadable(DLC_BASE_STILL):
                 return DLC_BASE_STILL
         if completed and renpy.loadable(DLC_COMPLETE_VIDEO):
-            return Movie(play=DLC_COMPLETE_VIDEO, loop=True)
+            return Movie(play=DLC_COMPLETE_VIDEO, loop=True, channel="dlcmenu")
         if completed and renpy.loadable(DLC_COMPLETE_STILL):
             return DLC_COMPLETE_STILL
         if renpy.loadable(DLC_BASE_VIDEO):
-            return Movie(play=DLC_BASE_VIDEO, loop=True)
+            return Movie(play=DLC_BASE_VIDEO, loop=True, channel="dlcmenu")
         if renpy.loadable("images/dlc_menu.png"):
             return "images/dlc_menu.png"
         return Solid("#0a0e14")
 
-    def _dlc_bg_switch(low):
-        return ConditionSwitch(
-            "getattr(persistent, 'dlc_completed', False)",
-            Transform(_dlc_menu_source(True, low), xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5)),
-            "True",
-            Transform(_dlc_menu_source(False, low), xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
-        )
+    def _dlc_menu_fit(src):
+        return Transform(src, xysize=(config.screen_width, config.screen_height),
+                         fit="cover", align=(0.5, 0.5))
+
+    # Состояние прохождения читаем один раз при запуске: раньше в
+    # ConditionSwitch создавались сразу оба Movie (обычное и финальное
+    # видео) — лишняя нагрузка на слабые устройства. После титров игра
+    # всё равно возвращается в главное меню полным рестартом.
+    _dlc_done = bool(getattr(persistent, "dlc_completed", False))
 
     renpy.image(
         "dlc_menu_bg",
         ConditionSwitch(
             "getattr(persistent, 'dlc_graphics_quality', 'medium') == 'low'",
-            _dlc_bg_switch(True),
+            _dlc_menu_fit(_dlc_menu_source(_dlc_done, True)),
             "True",
-            _dlc_bg_switch(False)
+            _dlc_menu_fit(_dlc_menu_source(_dlc_done, False))
         )
     )
 

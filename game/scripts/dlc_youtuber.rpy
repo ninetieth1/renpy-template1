@@ -53,12 +53,20 @@ init 5 python:
             return
         persistent.yt_unlocked = known
         renpy.save_persistent()
-        if fresh:
-            try:
-                renpy.show_screen("yt_note", shot=fresh[-1], extra=len(fresh) - 1)
-                renpy.restart_interaction()
-            except Exception:
-                pass
+
+        # Плашка с превью показывается только по ходу истории.
+        # В главном меню и в меню DLC она выглядела бы спойлером.
+        if getattr(renpy.store, "main_menu", False):
+            return
+        for _scr in ("dlc_select_screen", "yt_screen", "yt_shot", "dlc_prefs", "dlc_credits_screen"):
+            if renpy.get_screen(_scr):
+                return
+
+        try:
+            renpy.show_screen("yt_note", shot=fresh[-1], extra=len(fresh) - 1)
+            renpy.restart_interaction()
+        except Exception:
+            pass
 
     def yt_sync():
         # Перенос прогресса со старых сохранений выполняется один раз.
@@ -80,33 +88,14 @@ init 5 python:
     def yt_check_finale():
         yt_sync()
 
-    def yt_edit_nickname():
-        value = renpy.input(u"Введи ник:", default=persistent.yt_name or u"MR LIMBO", length=32, allow="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-")
-        value = (value or "").strip() or u"MR LIMBO"
-        persistent.yt_name = value[:32]
-        renpy.save_persistent()
-        renpy.restart_interaction()
+    # Ввод ника живёт в dlc_youtuber_runtime_fix.rpy: renpy.input нельзя
+    # вызывать прямо из действия экрана, нужен отдельный контекст.
 
     def yt_thumb(shot_id):
         return Transform("images/%s.png" % shot_id, xysize=(YT_THUMB_W, YT_THUMB_H), fit="cover", align=(0.5, 0.5))
 
-init 310 python:
-    _yt_prev_label_cb = config.label_callback
-    YT_UNLOCK_AT = {}
-    for _sid, _name, _stage, _trig in YT_SHOTS:
-        if _trig:
-            YT_UNLOCK_AT.setdefault(_trig, []).append(_sid)
-
-    def _yt_label_cb(label_name, abnormal):
-        if _yt_prev_label_cb is not None:
-            _yt_prev_label_cb(label_name, abnormal)
-        try:
-            ids = YT_UNLOCK_AT.get(label_name)
-            if ids:
-                yt_unlock(ids)
-        except Exception:
-            pass
-    config.label_callback = _yt_label_cb
+# Кадры открываются в момент показа (см. dlc_show в dlc_scene_map.rpy),
+# а не при входе в главу — иначе превью прилетало как спойлер заранее.
 
 label yt_finale_unlock:
     $ yt_unlock(["sc_31"])
@@ -334,7 +323,10 @@ screen yt_shot(shot=""):
     modal True
     zorder 160
     key "game_menu" action Hide("yt_shot")
-    add Transform("images/%s.png" % shot, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
+    if shot and renpy.loadable("images/%s.png" % shot):
+        add Transform("images/%s.png" % shot, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5))
+    else:
+        add Solid("#05080d")
     add Transform(Solid("#000000"), ysize=118, yalign=0.0, alpha=0.38)
     add Transform(Solid("#000000"), ysize=150, yalign=1.0, alpha=0.46)
     if _dlc_logo:

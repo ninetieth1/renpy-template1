@@ -53,15 +53,8 @@ init -10 python:
         return Fixed(*parts, xysize=(w, h))
 
 init 190 python:
-    _dlc_menu_video = "video/dlc_menu.webm"
-    _dlc_menu_still = "images/dlc_menu.png"
-    if renpy.loadable(_dlc_menu_video):
-        _dlc_menu_layer = Movie(play=_dlc_menu_video, loop=True)
-    elif renpy.loadable(_dlc_menu_still):
-        _dlc_menu_layer = _dlc_menu_still
-    else:
-        _dlc_menu_layer = Solid("#0a0e14")
-    renpy.image("dlc_menu_bg", Transform(_dlc_menu_layer, xysize=(config.screen_width, config.screen_height), fit="cover", align=(0.5, 0.5)))
+    # Фон меню DLC определяется в dlc_completion_menu.rpy (init 191) —
+    # здесь его больше не регистрируем, чтобы не было двух версий подряд.
     _dlc_logo = None
     for _cand in ("images/logo.png", "images/logo_ice2.png", "images/logo_ice.png", "images/logo_w.png"):
         if renpy.loadable(_cand):

@@ -36,21 +36,35 @@ init python:
             _dlc_displayable = _dlc_scene_displayable(_dlc_bg)
             renpy.image(_dlc_name, _dlc_displayable)
 
-            if _dlc_name.startswith("sc_"):
-                _dlc_suffix = _dlc_name[3:]
-                if _dlc_suffix.isdigit() and 17 <= int(_dlc_suffix) <= 32:
-                    renpy.image("dlc_s" + _dlc_suffix, _dlc_displayable)
-
-    if renpy.has_image("sc_32", exact=True):
-        renpy.image("dlc_s32_end", "sc_32")
-
     def dlc_show(name, trans=None):
         image_path = "images/%s.png" % name
+
+        # Как и bg() в основной игре: хвост предыдущего звука не тянется
+        # в следующий кадр.
+        renpy.sound.stop(channel="sound", fadeout=0.35)
+
         renpy.scene()
         if renpy.loadable(image_path) and renpy.has_image(name, exact=True):
             renpy.show(name, layer="master")
         elif renpy.has_image("black", exact=True):
             renpy.show("black", layer="master")
+
+        # Снег включается только на уличных кадрах.
+        try:
+            store.snow_here = (name in SNOW_SCENES)
+            if store.snow_here:
+                snow_show()
+            else:
+                snow_hide()
+        except Exception:
+            pass
+
+        # Кадр открыт по-настоящему — только теперь он попадает в «Я ютубер».
+        try:
+            yt_unlock([name])
+        except Exception:
+            pass
+
         renpy.with_statement(trans if trans is not None else store.smooth)
 
 

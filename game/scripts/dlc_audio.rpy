@@ -63,6 +63,11 @@ init 300 python:
             ambience = "audio/winter.mp3"
             volume = 0.28
 
+        # Тот же самый эмбиенс не перезапускаем — иначе на каждой главе
+        # слышен обрыв и новый заход с нуля.
+        if ambience and renpy.music.get_playing(channel="ambient") == ambience:
+            return
+
         if ambience and renpy.loadable(ambience):
             renpy.music.play(
                 ambience,
