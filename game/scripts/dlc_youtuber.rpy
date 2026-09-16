@@ -1,5 +1,8 @@
 default persistent.yt_name = u"MR LIMBO"
 default persistent.yt_unlocked = []
+# Однократный перенос прогресса старых сохранений (по seen_label).
+# После сброса прогресса флаг остаётся True, поэтому сброс не «откатывается».
+default persistent.yt_migrated = False
 
 init -5 python:
     YT_SHOTS = [
@@ -22,18 +25,16 @@ init 5 python:
         return None
 
     def yt_is_open(shot_id):
+        # Единственный источник правды — persistent.yt_unlocked.
+        # Иначе сброс прогресса тут же отменялся бы через seen_label().
         try:
             if persistent.yt_unlocked and shot_id in persistent.yt_unlocked:
                 return True
         except Exception:
             pass
-        trig = yt_trigger(shot_id)
-        if trig is None:
-            return bool(getattr(persistent, "completed", False))
-        try:
-            return bool(renpy.seen_label(trig))
-        except Exception:
-            return False
+        if yt_trigger(shot_id) is None:
+            return bool(getattr(persistent, "dlc_completed", False))
+        return False
 
     def yt_open_count():
         return len([s for s, n, st, tr in YT_SHOTS if yt_is_open(s)])
@@ -48,7 +49,10 @@ init 5 python:
             if renpy.loadable("images/%s.png" % sid) and sid not in known:
                 known.append(sid)
                 fresh.append(sid)
+        if not fresh:
+            return
         persistent.yt_unlocked = known
+        renpy.save_persistent()
         if fresh:
             try:
                 renpy.show_screen("yt_note", shot=fresh[-1], extra=len(fresh) - 1)
@@ -57,11 +61,21 @@ init 5 python:
                 pass
 
     def yt_sync():
+        # Перенос прогресса со старых сохранений выполняется один раз.
+        if getattr(persistent, "yt_migrated", False):
+            return
         known = list(persistent.yt_unlocked or [])
         for sid, name, stage, trig in YT_SHOTS:
-            if sid not in known and renpy.loadable("images/%s.png" % sid) and yt_is_open(sid):
-                known.append(sid)
+            if sid in known or not renpy.loadable("images/%s.png" % sid):
+                continue
+            try:
+                if trig and renpy.seen_label(trig):
+                    known.append(sid)
+            except Exception:
+                pass
         persistent.yt_unlocked = known
+        persistent.yt_migrated = True
+        renpy.save_persistent()
 
     def yt_check_finale():
         yt_sync()

@@ -3,10 +3,13 @@
 # Отдельная звуковая система DLC.
 # ==========================================================
 
+# Флаги состояния звука DLC должны переживать сохранение/загрузку и rollback,
+# поэтому это обычные default-переменные, а не init-переменные с "_".
+default dlc_audio_active = False
+default dlc_current_label = None
+
 init 300 python:
 
-    _dlc_audio_active = False
-    _dlc_current_label = None
     _dlc_previous_label_callback = config.label_callback
 
     _dlc_class_labels = {
@@ -73,23 +76,22 @@ init 300 python:
             renpy.music.stop(channel="ambient", fadeout=1.0)
 
     def _dlc_label_audio(label_name, abnormal):
-        global _dlc_audio_active, _dlc_current_label
 
         if _dlc_previous_label_callback is not None:
             _dlc_previous_label_callback(label_name, abnormal)
 
         if label_name.startswith("dlc_"):
-            _dlc_current_label = label_name
+            store.dlc_current_label = label_name
 
-            if not _dlc_audio_active:
-                _dlc_audio_active = True
+            if not store.dlc_audio_active:
+                store.dlc_audio_active = True
                 _dlc_play_soundtrack()
 
             _dlc_set_ambience(label_name)
 
-        elif label_name in ("start", "story_start") and _dlc_audio_active:
-            _dlc_audio_active = False
-            _dlc_current_label = None
+        elif label_name in ("start", "story_start") and store.dlc_audio_active:
+            store.dlc_audio_active = False
+            store.dlc_current_label = None
             renpy.music.stop(channel="ambient", fadeout=1.0)
 
     config.label_callback = _dlc_label_audio
@@ -101,17 +103,20 @@ init 300 python:
     _base_sfx = sfx
 
     def bgm(name, fade=2.0):
-        if not _dlc_audio_active:
+        if not store.dlc_audio_active:
             _base_bgm(name, fade)
 
     def bgm_stop(fade=2.0):
-        if not _dlc_audio_active:
+        if not store.dlc_audio_active:
             _base_bgm_stop(fade)
 
     def sfx(name, volume=1.0):
-        if _dlc_audio_active and (
+        # school_bell.mp3 в audio/sfx/ нет — звонок всегда берём из audio/bell.mp3,
+        # иначе после загрузки сохранения он просто пропадал.
+        if (
             name == "school_bell.mp3" or
-            (name == "game_beep.mp3" and _dlc_current_label == "dlc_ch_pustaya_parta")
+            (store.dlc_audio_active and name == "game_beep.mp3"
+             and store.dlc_current_label == "dlc_ch_pustaya_parta")
         ):
             if renpy.loadable("audio/bell.mp3"):
                 renpy.sound.play(

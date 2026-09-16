@@ -4,9 +4,11 @@
 
 init 195 python:
     def dlc_reset_progress():
+        # Сбрасываем ТОЛЬКО прогресс DLC.
+        # persistent.completed принадлежит основной игре и не трогается.
         persistent.dlc_completed = False
-        persistent.completed = False
         persistent.yt_unlocked = []
+        persistent.yt_migrated = True
         renpy.save_persistent()
         renpy.restart_interaction()
 

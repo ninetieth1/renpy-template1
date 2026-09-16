@@ -24,7 +24,9 @@ define classmate = Character("Одноклассник", color="#bbbbbb")
 define woman_one = Character("Женщина", color="#bbbbbb")
 define woman_two = Character("Вторая женщина", color="#bbbbbb")
 
-define voice = Character("Голос", color="#8f8f8f", what_italic=True)
+# ВАЖНО: имя "voice" занято встроенным оператором Ren'Py (voice "файл.ogg"),
+# из-за этого все реплики Голоса раньше не показывались вообще.
+define golos = Character("Голос", color="#8f8f8f", what_italic=True)
 define katya_voice = Character("Голос Кати", color="#ff9ec4")
 
 default dlc_grade = None

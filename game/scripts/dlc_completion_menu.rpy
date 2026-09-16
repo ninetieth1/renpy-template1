@@ -59,111 +59,196 @@ init 191 python:
         renpy.music.stop(channel="ambient", fadeout=0.5)
 
 label dlc_credits:
+    # Нижняя панель (Назад/Скрыть/...) не должна висеть поверх титров и меню.
+    $ quick_menu = False
+    window hide
     $ dlc_mark_completed()
-    $ renpy.music.play("audio/dlc_credits.mp3", channel="music", loop=False, fadein=1.5)
+    $ renpy.music.play("audio/dlc_credits.mp3", channel="music", loop=True, fadein=2.0)
     call screen dlc_credits_screen
-    $ renpy.music.stop(channel="music", fadeout=0.8)
-    call screen dlc_select_screen
-    return
+    $ renpy.music.stop(channel="music", fadeout=1.8)
+    scene black with Dissolve(1.0)
+    $ quick_menu = True
+    # Сюда приходят через jump, стек вызовов пуст: возвращаемся в главное
+    # меню честным рестартом, а не «return» в никуда.
+    $ renpy.full_restart()
 
-screen dlc_credits_screen():
-    modal True
-    zorder 300
 
-    add Solid("#000000")
+# ==========================================================
+# Титры DLC.
+# Длительность и высота считаются по содержимому, поэтому
+# прокрутка стартует за кадром, идёт ровно и заканчивается
+# вместе с текстом.
+# ==========================================================
 
-    fixed:
-        xfill True
-        yfill True
+init 200 python:
 
-        vbox:
-            xalign 0.5
-            ypos 0
-            xsize 1700
-            spacing 8
-            at dlc_credits_roll
+    def _dlc_credits_data():
+        # Берём титры основной игры, убираем финальный мемориальный блок
+        # («ВЕЧНАЯ ПАМЯТЬ» и «MR LIMBO · 1991») — в DLC он не нужен.
+        drop = (u"ВЕЧНАЯ ПАМЯТЬ", u"MR LIMBO  ·  1991", u"MR LIMBO · 1991")
+        items = []
+        for kind, val in CREDITS:
+            if kind in ("head", "small", "name", "line") and val in drop:
+                continue
+            items.append((kind, val))
 
-            for index, item in enumerate(CREDITS):
-                $ kind, val = item
+        # Хвостовые пустоты после удаления блока не нужны.
+        while items and items[-1][0] == "gap":
+            items.pop()
 
-                if kind == "gap":
-                    null height val
-                elif kind == "head":
-                    text ("ДЕВЯНОСТЫЕ: HERITAGE" if index == 0 else val):
-                        xalign 0.5
-                        size 78
-                        color "#ffffff"
-                        font "kazmann-sans.ttf"
-                        kerning 6
-                elif kind == "title":
-                    null height 26
-                    text val:
-                        xalign 0.5
-                        size 34
-                        color "#00b3ff"
-                        font "kazmann-sans.ttf"
-                        kerning 5
-                    null height 10
-                elif kind == "name":
-                    text val:
-                        xalign 0.5
-                        size 42
-                        color "#eef3f8"
-                elif kind == "small":
-                    text val:
-                        xalign 0.5
-                        size 26
-                        color "#7f8c99"
-                else:
-                    text val:
-                        xalign 0.5
-                        size 27
-                        color "#a9b6c2"
+        # Заголовок — свой.
+        for i, (kind, val) in enumerate(items):
+            if kind == "head":
+                items[i] = ("head", u"ДЕВЯНОСТЫЕ: HERITAGE")
+                break
 
-            null height 120
+        items += [
+            ("gap", 90),
+            ("title", u"В ГЛАВНЫХ РОЛЯХ"),
+            ("name", u"ЖЕНЯ"),
+            ("small", u"роль Кати"),
+            ("gap", 26),
+            ("name", u"АЛИНА"),
+            ("small", u"роль ученицы школы"),
+            ("gap", 110),
+            ("thanks", u"СПАСИБО ЗА УЧАСТИЕ"),
+            ("gap", 160),
+        ]
+        return items
 
-            text "В ГЛАВНЫХ РОЛЯХ":
+    DLC_CREDITS = _dlc_credits_data()
+
+    _DLC_CREDITS_H = {
+        "gap": 0, "head": 96, "thanks": 84, "title": 112,
+        "name": 58, "small": 42, "line": 44,
+    }
+
+    def _dlc_credits_height():
+        h = 0
+        for kind, val in DLC_CREDITS:
+            h += int(val) if kind == "gap" else _DLC_CREDITS_H.get(kind, 44)
+            h += 8
+        return h
+
+    def _dlc_edge_fade(height, top=True, steps=16):
+        """Мягкая градиентная шторка вместо жёсткой чёрной полосы."""
+        band = max(1, int(height / steps))
+        parts = []
+        for i in range(steps):
+            a = (steps - i) / float(steps) if top else (i + 1) / float(steps)
+            parts.append(
+                Transform(Solid("#000000"),
+                          xysize=(config.screen_width, band + 1),
+                          alpha=a, ypos=i * band)
+            )
+        return Fixed(*parts, xysize=(config.screen_width, band * steps))
+
+    DLC_CREDITS_SPEED = 95.0
+    DLC_CREDITS_H = _dlc_credits_height()
+    DLC_CREDITS_TIME = (DLC_CREDITS_H + config.screen_height) / DLC_CREDITS_SPEED
+
+
+init 200:
+
+    transform dlc_credits_roll:
+        ypos config.screen_height
+        linear DLC_CREDITS_TIME ypos -DLC_CREDITS_H
+
+    transform dlc_credits_fade:
+        alpha 0.0
+        linear 1.4 alpha 1.0
+
+    transform dlc_credits_pulse:
+        alpha 0.75
+        block:
+            linear 1.8 alpha 1.0
+            linear 1.8 alpha 0.75
+            repeat
+
+    screen dlc_credits_screen():
+        modal True
+        zorder 300
+
+        add Solid("#000000")
+
+        # Лёгкий холодный подтон, чтобы чёрный экран не был плоским.
+        add Transform(Solid("#0b1622"), xysize=(config.screen_width, config.screen_height), alpha=0.35)
+
+        fixed:
+            xfill True
+            yfill True
+            at dlc_credits_fade
+
+            vbox:
                 xalign 0.5
-                size 48
-                color "#00b3ff"
-                font "kazmann-sans.ttf"
-                kerning 5
+                xsize 1700
+                spacing 8
+                at dlc_credits_roll
 
-            null height 28
+                for _k, _v in DLC_CREDITS:
 
-            text "ЖЕНЯ":
-                xalign 0.5
-                size 58
-                color "#ffffff"
-                font "kazmann-sans.ttf"
-            text "роль Кати":
-                xalign 0.5
-                size 40
-                color "#eef3f8"
+                    if _k == "gap":
+                        null height _v
 
-            null height 34
+                    elif _k == "head":
+                        text _v:
+                            xalign 0.5
+                            size 78
+                            color "#ffffff"
+                            font "kazmann-sans.ttf"
+                            kerning 6
+                            outlines [(3, "#00b3ff55", 0, 0)]
 
-            text "АЛИНА":
-                xalign 0.5
-                size 58
-                color "#ffffff"
-                font "kazmann-sans.ttf"
-            text "роль ученицы школы":
-                xalign 0.5
-                size 40
-                color "#eef3f8"
+                    elif _k == "thanks":
+                        text _v:
+                            xalign 0.5
+                            size 52
+                            color "#8fbcff"
+                            font "kazmann-sans.ttf"
+                            kerning 4
+                            at dlc_credits_pulse
 
-            null height 150
+                    elif _k == "title":
+                        null height 26
+                        text _v:
+                            xalign 0.5
+                            size 34
+                            color "#00b3ff"
+                            font "kazmann-sans.ttf"
+                            kerning 5
+                        null height 6
+                        add Transform(Solid("#00b3ff"), xysize=(210, 2), alpha=0.5) xalign 0.5
+                        null height 8
 
-            text "СПАСИБО ЗА УЧАСТИЕ":
-                xalign 0.5
-                size 52
-                color "#8fbcff"
-                font "kazmann-sans.ttf"
+                    elif _k == "name":
+                        text _v:
+                            xalign 0.5
+                            size 42
+                            color "#eef3f8"
 
-    # Возврат происходит по окончании прокрутки, а не по длине аудиофайла.
-    timer 110.0 action Return()
+                    elif _k == "small":
+                        text _v:
+                            xalign 0.5
+                            size 26
+                            color "#7f8c99"
 
-transform dlc_credits_roll:
-    yoffset 0
-    linear 110.0 yoffset -6200
+                    else:
+                        text _v:
+                            xalign 0.5
+                            size 27
+                            color "#a9b6c2"
+
+        # Плавные градиентные шторки: текст появляется и уходит без резкой кромки.
+        add _dlc_edge_fade(170, True) yalign 0.0
+        add _dlc_edge_fade(170, False) yalign 1.0
+
+        # Экран закрывается сам ровно тогда, когда текст ушёл вверх.
+        timer (DLC_CREDITS_TIME + 1.2) action Return(True)
+
+        textbutton _("Пропустить"):
+            xalign 0.98
+            yalign 0.96
+            action Return(True)
+            text_size 26
+            text_color "#46617a"
+            text_hover_color "#ffffff"

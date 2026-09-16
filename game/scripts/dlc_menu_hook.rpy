@@ -3,7 +3,7 @@
 # ==========================================================
 
 init 100 python:
-    try:
+    if True:
         STORY_CODES.update({
             "2010": ("dlc_ch_urok", u"DLC. Сцена 1. Класс после каникул"),
             "2020": ("dlc_ch_deeprichastie", u"DLC. Сцена 2. Деепричастный оборот"),
@@ -38,8 +38,6 @@ init 100 python:
             "2310": ("dlc_ch_peshkom", u"DLC. Сцена 31. Путь пешком"),
             "2320": ("dlc_ch_stena", u"DLC. Сцена 32. Стена"),
         })
-    except Exception:
-        pass
 
 init -10 python:
     DLC_BTN_W = 620 if renpy.variant("small") else 560
@@ -292,10 +290,6 @@ screen dlc_prefs():
             style_prefix "dlc_btn"
             xalign 0.5
             action Hide("dlc_prefs")
-
-init 300:
-    screen age_gate():
-        timer 0.01 action Return(True)
 
 init 200:
     screen main_menu():

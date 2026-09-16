@@ -14,7 +14,7 @@ init python:
         # создаёт отдельную уменьшенную текстуру, поэтому рендер
         # действительно проще — экономит память и ускоряет слабые
         # устройства. Средние/Высокие показывают исходное качество.
-        low_image = im.Scale(path, _dlc_low_size[0], _dlc_low_size[1])
+        low_image = Transform(path, xysize=_dlc_low_size, fit="cover")
         low = Transform(low_image, xysize=_dlc_screen_size, fit="cover", align=(0.5, 0.5))
         normal = Transform(
             path,
